@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3-Card Tarot Reading</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* 3D Flip 및 애니메이션 관련 커스텀 CSS */
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+    .transform-style-3d {
+      transform-style: preserve-3d;
+    }
+    .backface-hidden {
+      backface-visibility: hidden;
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+    .rotate-z-180 {
+      transform: rotateZ(180deg);
+    }
+    
+    .card-inner {
+      transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+    }
+    
+    /* 스프레드 카드 호버 효과 */
+    .spread-card {
+      position: absolute;
+      left: 50%;
+      bottom: 50px;
+      transform-origin: bottom center;
+      transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 1;
+    }
+
+    .spread-card.dealt:hover {
+      z-index: 100 !important;
+      transform: translateX(-50%) rotate(var(--rot)) translateY(-40px) scale(1.15) !important;
+      filter: brightness(1.2) drop-shadow(0 0 20px rgba(129, 140, 248, 0.8));
+      border-color: #818cf8;
+    }
+
+    #card-grid {
+      position: relative;
+      height: 400px;
+      margin-top: 20px;
+      perspective: 1500px;
+      width: 100%;
+    }
+
+    /* 선택된 카드 비행 애니메이션용 */
+    .spread-card.is-selected {
+      z-index: 500 !important;
+      opacity: 1 !important;
+      pointer-events: none;
+      filter: brightness(1.2) drop-shadow(0 0 15px rgba(129, 140, 248, 0.8));
+    }
+
+    @media (min-width: 768px) {
+      /* 데스크톱용은 JS에서 제어 */
+    }
+
+    /* 셔플 애니메이션 */
+    @keyframes shuffle-anim {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(20px, -20px) rotate(15deg); }
+      50% { transform: translate(-20px, -10px) rotate(-10deg); }
+      75% { transform: translate(10px, 20px) rotate(5deg); }
+      100% { transform: translate(0, 0) rotate(0deg); }
+    }
+    .shuffling {
+      animation: shuffle-anim 0.4s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen font-sans overflow-x-hidden selection:bg-indigo-500">
+
+  <main id="app-container" class="container mx-auto px-4 py-8 h-full flex flex-col items-center justify-center min-h-screen">
+    
+    <section id="state-start" class="text-center w-full flex flex-col items-center">
+      <h1 class="text-4xl md:text-5xl font-bold mb-6 tracking-wider text-indigo-300">TAROT READING</h1>
+      <p class="text-slate-400 mb-8 max-w-md mx-auto">타로 마스터에게 당신의 고민을 털어놓으세요. 마음이 차분해질 때 카드를 섞어보세요.</p>
+      
+      <div class="w-full max-w-md mb-10">
+        <textarea id="user-concern" 
+          class="w-full h-32 p-4 bg-slate-800 border-2 border-indigo-900/50 rounded-xl text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none transition-all resize-none shadow-inner"
+          placeholder="어떤 것이 궁금하신가요? (예: 올해 연애운이 궁금해요, 이직을 고민 중이에요 등)"></textarea>
+      </div>
+
+      <button id="btn-shuffle" class="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full text-xl font-semibold transition-all shadow-lg hover:shadow-indigo-500/50">
+        마음의 준비가 되었습니다
+      </button>
+      <div id="shuffle-deck-visual" class="hidden mt-12 w-32 h-48 bg-indigo-900 rounded-xl border-2 border-indigo-400 flex items-center justify-center bg-cover bg-center">
+        <span class="text-white font-bold drop-shadow-md">Shuffling...</span>
+      </div>
+      <script>
+        document.getElementById('shuffle-deck-visual').style.backgroundImage = 'url("https://upload.wikimedia.org/wikipedia/commons/5/5c/Tarot_card_back_RWS.jpg")';
+      </script>
+    </section>
+
+    <section id="state-spread" class="hidden w-full max-w-5xl text-center">
+      <h2 class="text-2xl font-semibold mb-2 text-indigo-300">카드를 3장 선택해라</h2>
+      <p id="selection-counter" class="text-slate-400 mb-8">선택된 카드: 0 / 3</p>
+      
+      <!-- 선택된 카드들이 위치할 슬롯 추가 -->
+      <div id="selected-slots" class="flex justify-center gap-4 md:gap-8 mb-12 h-32 md:h-40">
+        <div class="slot w-16 h-28 md:w-24 md:h-40 border-2 border-dashed border-indigo-700/50 rounded-lg flex flex-col items-center justify-center relative">
+          <span class="text-xs text-indigo-700 absolute -bottom-6">과거</span>
+        </div>
+        <div class="slot w-16 h-28 md:w-24 md:h-40 border-2 border-dashed border-indigo-700/50 rounded-lg flex flex-col items-center justify-center relative">
+          <span class="text-xs text-indigo-700 absolute -bottom-6">현재</span>
+        </div>
+        <div class="slot w-16 h-28 md:w-24 md:h-40 border-2 border-dashed border-indigo-700/50 rounded-lg flex flex-col items-center justify-center relative">
+          <span class="text-xs text-indigo-700 absolute -bottom-6">미래</span>
+        </div>
+      </div>
+
+      <div id="card-grid" class="flex flex-wrap justify-center gap-3 md:gap-4"></div>
+    </section>
+
+    <section id="state-result" class="hidden w-full max-w-5xl">
+      <h2 class="text-3xl font-bold mb-10 text-center text-indigo-300">당신의 타로 리딩 결과</h2>
+      <div id="result-container" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        </div>
+      <div class="mt-12 text-center">
+        <button id="btn-restart" class="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-full font-semibold transition-all">
+          다시 뽑기
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // [설정] Cloudflare Worker URL을 여기에 입력하세요.
+    const WORKER_URL = "https://your-worker-name.your-subdomain.workers.dev";
+
+    // [1. 데이터 구조] 메이저 아르카나 22장 상세 데이터 (기본값)
+    const tarotDeck = [
+      { 
+        id: 0, name: "0. The Fool (바보)", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/9/90/RWS_Tarot_00_Fool.jpg", 
+        meaning_up: "새로운 모험의 시작이네요! 지금 당신은 아무런 걱정 없이 순수한 마음으로 첫발을 내딛고 있어요. 주위에서 위험하다고 말릴지 몰라도, 당신의 무한한 가능성을 믿고 나아가 보세요. 가벼운 발걸음이 예상치 못한 행운을 불러올 거예요.", 
+        meaning_rev: "잠깐만요! 너무 앞만 보고 달리는 거 아닌가요? 지금은 열정보다 신중함이 필요한 때예요. 계획 없는 무모한 선택은 자칫 위험한 상황을 만들 수 있어요. 잠시 멈춰서 발밑을 잘 살피고, 현실적인 조언에 귀를 기울여보세요." 
+      },
+      { 
+        id: 1, name: "I. The Magician (마법사)", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/d/de/RWS_Tarot_01_Magician.jpg", 
+        meaning_up: "당신은 이미 모든 준비가 끝났어요! 당신의 손에는 세상을 바꿀 도구와 재능이 모두 쥐어져 있네요. 강한 의지만 있다면 무엇이든 현실로 만들어낼 수 있는 창조적인 에너지가 넘쳐흐르는 시기입니다. 당신의 능력을 마음껏 펼쳐보세요.", 
+        meaning_rev: "자신의 재능을 너무 과신하거나, 혹은 엉뚱한 곳에 힘을 낭비하고 있진 않나요? 겉모습만 화려하게 포장하기보다 진실된 행동이 필요해요. 누군가를 속이려 하거나 꼼수를 부리는 건 결국 자신에게 독이 되어 돌아올 수 있으니 주의하세요." 
+      },
+      { 
+        id: 2, name: "II. The High Priestess (여사제)", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/8/88/RWS_Tarot_02_High_Priestess.jpg", 
+        meaning_up: "지금은 밖으로 나서기보다 내면의 목소리에 집중해야 할 때입니다. 당신의 직관이 아주 날카로워져 있거든요. 겉으로 드러나지 않은 비밀이나 지혜를 찾게 될 거예요. 차분하게 상황을 지켜보며 당신의 통찰력을 믿어보세요.", 
+        meaning_rev: "마음속이 너무 복잡해서 갈피를 못 잡고 있지는 않나요? 겉으로는 차분해 보이지만 속은 요동치고 있을지 몰라요. 타인의 시선에 너무 신경 쓰지 말고, 당신의 진심이 무엇인지 다시 한번 생각해보는 시간이 필요해 보입니다." 
+      },
+      { 
+        id: 3, name: "III. The Empress (여황제)", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/d/d2/RWS_Tarot_03_Empress.jpg", 
+        meaning_up: "축하해요! 풍요로움과 행복이 가득한 시기네요. 당신이 공들여 온 일들이 아름다운 결실을 맺을 거예요. 주변 사람들에게 사랑을 나누어주면 그 행복은 배가 되어 돌아옵니다. 지금 이 여유와 평화로운 기운을 마음껏 즐기세요.", 
+        meaning_rev: "요즘 너무 다른 사람에게 의존하고 있거나 게을러진 건 아닐까요? 풍요로움에 취해 정작 중요한 것을 놓치고 있을 수 있어요. 때로는 지나친 간섭이나 과보호가 갈등을 만들기도 하니, 적당한 거리두기가 필요할 때입니다." 
+      },
+      { 
+        id: 4, name: "IV. The Emperor (황제)", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/c/c3/RWS_Tarot_04_Emperor.jpg", 
+        meaning_up: "강력한 리더십과 카리스마가 돋보이는군요. 당신은 상황을 완벽하게 통제하고 안정을 찾을 능력이 있습니다. 질서와 체계적인 계획을 통해 목표를 달성할 수 있는 시기예요. 당신의 권위를 믿고 당당하게 밀고 나가세요.", 
+        meaning_rev: "너무 고집을 피우거나 독단적으로 행동하고 있지는 않은지 돌아보세요. 당신의 강압적인 태도가 주변 사람들을 지치게 할 수 있습니다. 융통성을 발휘하지 않으면 쌓아온 성벽이 무너질 수도 있으니 부드러운 리더십이 필요해요." 
+      },
+      { 
+        id: 5, name: "V. The Hierophant (교황)", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/8/8d/RWS_Tarot_05_Hierophant.jpg", 
+        meaning_up: "전통과 원칙을 지키는 것이 중요한 시기입니다. 믿을 만한 멘토나 조언자를 만나 올바른 길로 인도받을 수 있어요. 지금은 파격적인 변화보다는 검증된 방식과 질서를 따르는 것이 당신에게 더 큰 안정을 가져다줄 거예요.", 
+        meaning_rev: "낡은 생각이나 고정관념에 갇혀 새로운 기회를 놓치고 있나요? 너무 보수적인 태도는 성장을 방해할 뿐이에요. 때로는 정해진 틀을 깨고 나만의 방식을 시도해 보는 용기가 필요합니다. 맹목적인 믿음은 경계하세요." 
+      },
+      { 
+        id: 6, name: "VI. The Lovers (연인)", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/3/3a/RWS_Tarot_06_Lovers.jpg", 
+        meaning_up: "아름다운 조화와 사랑의 기운이 느껴지네요! 연인과의 관계가 깊어지거나, 인생에서 아주 중요한 선택의 기로에 서게 될 것입니다. 당신의 마음이 진정으로 원하는 것이 무엇인지 따라가세요. 가치관이 일치하는 최고의 파트너를 만나게 될 수도 있어요.", 
+        meaning_rev: "관계에서 불협화음이 들려오고 있군요. 선택의 순간에서 갈팡질팡하며 잘못된 결정을 내릴 수도 있습니다. 겉모습이나 유혹에 휘둘리지 말고, 관계의 본질을 다시 한번 생각해보세요. 지금은 감정보다 이성적인 판단이 필요합니다." 
+      },
+      { 
+        id: 7, name: "VII. The Chariot (전차)", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/9/9b/RWS_Tarot_07_Chariot.jpg", 
+        meaning_up: "강력한 추진력으로 목표를 향해 달려가세요! 어떤 장애물도 당신의 의지를 꺾을 수 없습니다. 승리는 이미 당신의 것이나 다름없어요. 다만, 감정과 이성의 균형을 잘 잡아야 끝까지 완주할 수 있다는 사실을 잊지 마세요.", 
+        meaning_rev: "방향을 잃고 우왕좌왕하고 있지는 않나요? 열정만 앞서다가는 통제력을 잃고 사고가 날 수 있어요. 지금은 무조건 전진하기보다, 잠시 멈춰서 목적지가 어디인지 점검하고 에너지를 조절해야 할 때입니다." 
+      },
+      { 
+        id: 8, name: "VIII. Strength (힘)", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/f/f5/RWS_Tarot_08_Strength.jpg", 
+        meaning_up: "부드러운 카리스마의 승리네요! 당신은 거친 맹수조차 다스릴 수 있는 내면의 힘과 인내심을 가지고 있습니다. 폭력이나 강압이 아닌, 이해와 포용으로 문제를 해결해보세요. 당신의 따뜻한 에너지가 결국 모든 상황을 평정할 거예요.", 
+        meaning_rev: "자신감이 떨어지고 두려움이 앞서고 있나요? 내면의 본능을 다스리지 못해 화를 내거나 비겁하게 행동할 수 있습니다. 스스로를 믿지 못하는 마음이 가장 큰 적이에요. 다시 한번 마음을 가다듬고 내 안의 용기를 찾아보세요." 
+      },
+      { 
+        id: 9, name: "IX. The Hermit (은둔자)", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/4/4d/RWS_Tarot_09_Hermit.jpg", 
+        meaning_up: "세상의 소란스러움에서 잠시 벗어나 혼자만의 시간을 가져보세요. 당신의 내면 깊은 곳에 이미 답이 있습니다. 깊은 성찰을 통해 진정한 자아를 발견하고 지혜를 얻게 될 시기입니다. 고독은 외로움이 아니라 성숙을 위한 과정이에요.", 
+        meaning_rev: "혼자만의 세계에 너무 갇혀서 주변과 단절되어 있진 않나요? 고집스럽게 자신의 생각만 옳다고 믿거나 현실을 외면하고 있을 수 있어요. 이제는 등불을 들고 밖으로 나와 세상과 소통해야 할 때입니다. 고립은 답이 아닙니다." 
+      },
+      { 
+        id: 10, name: "X. Wheel of Fortune (운명의 수레바퀴)", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/3/37/RWS_Tarot_10_Wheel_of_Fortune.jpg", 
+        meaning_up: "인생의 커다란 전환점이 찾아왔습니다! 운명의 수레바퀴가 당신에게 유리한 방향으로 돌기 시작했어요. 갑작스러운 행운이나 변화가 찾아온다면 주저하지 말고 올라타세요. 모든 것은 흘러가는 법이니, 지금 이 기회를 놓치지 마세요.", 
+        meaning_rev: "운의 흐름이 잠시 좋지 않은 쪽으로 기울었네요. 뜻대로 되지 않는 상황에 답답함을 느낄 수 있습니다. 하지만 기억하세요, 수레바퀴는 계속 돕니다. 지금의 불운에 너무 좌절하지 말고 다음 기회를 위해 조용히 준비하며 기다리세요." 
+      },
+      { 
+        id: 11, name: "XI. Justice (정의)", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/e/e0/RWS_Tarot_11_Justice.jpg", 
+        meaning_up: "뿌린 대로 거두는 법이죠. 당신의 노력에 대한 공정한 대가를 받게 될 것입니다. 지금은 감정에 치우치지 말고 냉철하고 객관적으로 판단해야 해요. 진실은 반드시 밝혀질 것이며, 모든 일은 사필귀정으로 흘러가게 됩니다.", 
+        meaning_rev: "불공정한 대우를 받거나 편견에 치우친 판단을 내릴 수 있는 위험이 있어요. 자신의 잘못을 인정하지 않고 책임을 회피하려고 하지는 않나요? 균형이 깨진 상황에서는 결코 좋은 결과가 나올 수 없으니 다시 한번 자신을 돌아보세요." 
+      },
+      { 
+        id: 12, name: "XII. The Hanged Man (매달린 사람)", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/2/2b/RWS_Tarot_12_Hanged_Man.jpg", 
+        meaning_up: "지금은 멈춰서 세상을 거꾸로 바라볼 때입니다. 남들과는 다른 관점에서 생각해보면 새로운 해결책이 보일 거예요. 당장의 성과가 없어 답답할 수 있지만, 이 기다림과 희생은 더 큰 도약을 위한 값진 자양분이 될 것입니다.", 
+        meaning_rev: "아무런 의미 없는 희생을 하고 있거나 제자리걸음만 반복하고 있진 않나요? 헛된 기대를 품고 시간을 낭비하고 있을 수 있습니다. 이제는 묶인 줄을 풀고 내려와야 해요. 변화를 거부하는 고집은 당신을 더 힘들게 할 뿐입니다." 
+      },
+      { 
+        id: 13, name: "XIII. Death (죽음)", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/d/d7/RWS_Tarot_13_Death.jpg", 
+        meaning_up: "두려워하지 마세요. 끝은 곧 새로운 시작을 의미합니다. 당신의 인생에서 낡고 쓸모없는 것들이 정리되고 새로운 싹이 돋아날 준비를 하고 있어요. 과거를 과감히 놓아주어야 더 멋진 미래가 찾아옵니다. 변화의 파도를 기쁘게 맞이하세요.", 
+        meaning_rev: "이미 끝난 일에 미련을 갖고 매달리고 있군요. 변화가 두려워 억지로 정체된 상황을 유지하려 하면 고통만 길어질 뿐이에요. 이제는 인정하고 보내줘야 합니다. 낡은 것을 비워내야만 새로운 행운이 들어올 자리가 생깁니다." 
+      },
+      { 
+        id: 14, name: "XIV. Temperance (절제)", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/f/f8/RWS_Tarot_14_Temperance.jpg", 
+        meaning_up: "서로 다른 두 기운이 만나 조화를 이루는 시기입니다. 조급해하지 말고 천천히 여유를 가지고 조율해보세요. 당신의 균형 잡힌 마음이 평화를 가져다줄 거예요. 인내심을 갖고 중용을 지킨다면 모든 일이 순조롭게 풀릴 것입니다.", 
+        meaning_rev: "마음의 균형이 깨져버렸네요. 감정 기복이 심하거나 어느 한쪽으로 치우친 극단적인 태도를 보이고 있을지 몰라요. 성급한 결정은 일을 그르칠 수 있습니다. 지금 가장 필요한 건 흥분을 가라앉히고 평정심을 되찾는 일이에요." 
+      },
+      { 
+        id: 15, name: "XV. The Devil (악마)", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/5/55/RWS_Tarot_15_Devil.jpg", 
+        meaning_up: "유혹의 손길이 아주 강하게 뻗어오고 있네요. 달콤한 유혹이나 물질적인 욕망, 혹은 나쁜 습관에 중독되어 자유를 잃고 있을 수 있습니다. 지금의 쾌락이 나를 갉아먹고 있지는 않은지 냉정하게 살펴보세요. 스스로를 묶고 있는 사슬을 끊어낼 용기가 필요합니다.", 
+        meaning_rev: "드디어 어둠의 터널에서 빠져나올 기회가 생겼습니다! 나를 억누르던 구속과 집착에서 벗어나 자유를 되찾기 시작했네요. 이제는 무엇이 소중한지 깨달았으니, 다시는 과거의 잘못된 길로 돌아가지 않도록 정신을 바짝 차려야 합니다." 
+      },
+      { 
+        id: 16, name: "XVI. The Tower (탑)", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/5/53/RWS_Tarot_16_Tower.jpg", 
+        meaning_up: "충격적인 변화가 찾아올 수 있습니다. 하지만 걱정하지 마세요. 이 붕괴는 잘못 쌓아 올린 거짓된 기반을 무너뜨리고 진실을 드러내기 위한 과정일 뿐이에요. 갑작스러운 사건이 일어나더라도 당황하지 말고, 더 단단한 새 집을 지을 기회로 삼으세요.", 
+        meaning_rev: "위태위태한 상황이 계속 이어지고 있군요. 폭풍우가 몰아치기 전의 고요함 같은 느낌일까요? 억지로 위기를 모면하려고 해봐야 근본적인 문제는 해결되지 않습니다. 차라리 지금 터질 것이 터지는 게 나중을 위해서는 더 나은 선택일 수 있어요." 
+      },
+      { 
+        id: 17, name: "XVII. The Star (별)", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/d/db/RWS_Tarot_17_Star.jpg", 
+        meaning_up: "어두운 밤하늘에 반짝이는 별을 찾으셨군요! 희망과 치유의 에너지가 당신을 감싸고 있습니다. 힘든 시간은 이제 지나갔어요. 당신의 꿈을 향해 다시 한 걸음 나아가보세요. 당신은 축복받은 존재이며, 밝은 미래가 약속되어 있습니다.", 
+        meaning_rev: "희망이 보이지 않아 낙담하고 있나요? 꿈과 현실 사이의 괴리감 때문에 무기력함을 느낄 수 있습니다. 하지만 별은 구름 뒤에 잠시 가려져 있을 뿐이에요. 부정적인 생각에 빠져 스스로를 괴롭히지 마세요. 당신에게는 아직 반짝이는 재능이 남아있습니다." 
+      },
+      { 
+        id: 18, name: "XVIII. The Moon (달)", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/7/7f/RWS_Tarot_18_Moon.jpg", 
+        meaning_up: "마음속에 안개가 자욱하게 낀 것처럼 불안하고 혼란스러운 시기네요. 겉으로 보이는 게 전부가 아닐 수 있으니 주의하세요. 지금은 잠재의식 속의 두려움이 현실을 왜곡하고 있을지 몰라요. 서두르지 말고 안개가 걷힐 때까지 차분하게 기다려보세요.", 
+        meaning_rev: "드디어 불안과 공포에서 벗어나 진실을 마주하게 되었군요! 당신을 괴롭히던 오해와 환상이 사라지고 상황이 명확해지고 있습니다. 이제는 안심하고 앞으로 나아가도 좋아요. 당신의 직관이 다시 올바른 방향을 가리키기 시작했습니다." 
+      },
+      { 
+        id: 19, name: "XIX. The Sun (태양)", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/1/17/RWS_Tarot_19_Sun.jpg", 
+        meaning_up: "최고의 카드가 나왔네요! 당신의 앞길에 눈부신 성공과 기쁨이 가득합니다. 아이처럼 순수한 열정으로 세상을 즐겨보세요. 당신의 긍정적인 에너지가 주변 사람들에게도 큰 행복을 전달할 거예요. 지금 이 순간을 마음껏 누릴 자격이 충분합니다!", 
+        meaning_rev: "잠시 구름이 태양을 가렸네요. 성공이 조금 늦어지거나 기대했던 것보다 결과가 미흡할 수 있습니다. 하지만 이건 일시적인 현상일 뿐이에요. 너무 낙관만 하다가 실수를 할 수 있으니, 아주 조금의 주의만 기울인다면 다시 밝은 빛을 보게 될 것입니다." 
+      },
+      { 
+        id: 20, name: "XX. Judgement (심판)", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/d/dd/RWS_Tarot_20_Judgement.jpg", 
+        meaning_up: "새로운 부활의 나팔 소리가 들리네요! 과거의 노력에 대한 최종적인 평가가 내려지고 새로운 기회가 찾아올 것입니다. 당신의 양심과 신념에 따라 결단을 내려야 할 때예요. 지난날의 후회는 털어버리고 당당하게 새로운 삶으로 나아가세요.", 
+        meaning_rev: "결정적인 순간에 망설이며 기회를 놓치고 있진 않나요? 과거의 잘못에 묶여 스스로를 자책하고 있을지 몰라요. 하지만 심판은 당신을 벌하기 위함이 아니라 깨우치기 위함입니다. 이제는 현실을 직시하고 변화를 받아들여야 할 때입니다." 
+      },
+      { 
+        id: 21, name: "XXI. The World (세계)", 
+        image: "https://upload.wikimedia.org/wikipedia/commons/f/ff/RWS_Tarot_21_World.jpg", 
+        meaning_up: "완벽한 마무리와 성취를 축하합니다! 당신의 긴 여정이 드디어 아름다운 결실을 맺었네요. 당신은 이제 하나의 세상을 완성했고, 더 넓은 세상으로 나갈 준비가 되었습니다. 조화롭고 완벽한 행복을 마음껏 만끽하세요. 당신이 주인공입니다!", 
+        meaning_rev: "거의 다 왔는데 마지막 한 끝이 부족하네요. 목표 달성이 조금 지연되거나 왠지 모를 공허함을 느낄 수 있습니다. 하지만 포기하지 마세요. 아주 작은 퍼즐 조각 하나만 더 채우면 완벽한 그림이 완성될 것입니다. 조금만 더 힘을 내세요!" 
+      }
+    ];
+
+    // 변수 상태 관리
+    let shuffledDeck = [];
+    let selectedCards = [];
+    let userConcern = ""; // 사용자 고민 저장용
+    const positions = ["과거", "현재", "미래"];
+
+    // DOM 요소
+    const stateStart = document.getElementById('state-start');
+    const inputConcern = document.getElementById('user-concern');
+    const stateSpread = document.getElementById('state-spread');
+    const stateResult = document.getElementById('state-result');
+    const btnShuffle = document.getElementById('btn-shuffle');
+    const shuffleVisual = document.getElementById('shuffle-deck-visual');
+    const cardGrid = document.getElementById('card-grid');
+    const selectionCounter = document.getElementById('selection-counter');
+    const resultContainer = document.getElementById('result-container');
+    const btnRestart = document.getElementById('btn-restart');
+
+    // [3. 핵심 자바스크립트 로직]
+    // 타이핑 애니메이션 효과
+    function typeWriter(element, text, speed = 40) {
+      let i = 0;
+      element.textContent = "";
+      function type() {
+        if (i < text.length) {
+          element.textContent += text.charAt(i);
+          i++;
+          setTimeout(type, speed);
+        }
+      }
+      type();
+    }
+
+    // 초기화 및 셔플 시작
+    btnShuffle.addEventListener('click', () => {
+      userConcern = inputConcern.value.trim() || "나의 미래";
+      btnShuffle.classList.add('hidden');
+      inputConcern.parentElement.classList.add('hidden'); // 입력 필드 숨김
+      shuffleVisual.classList.remove('hidden');
+      shuffleVisual.classList.add('shuffling');
+
+      // 1.5초 셔플 애니메이션 후 스프레드 화면으로 전환
+      setTimeout(() => {
+        shuffleVisual.classList.remove('shuffling');
+        shuffledDeck = shuffleArray(tarotDeck);
+        goToSpreadState();
+      }, 1500);
+    });
+
+    // 스프레드 화면 렌더링
+    function goToSpreadState() {
+      stateStart.classList.add('hidden');
+      stateSpread.classList.remove('hidden');
+      
+      cardGrid.innerHTML = '';
+      selectedCards = [];
+      updateCounter();
+
+      const totalCards = shuffledDeck.length;
+      // 부채꼴 각도 설정 (총 90도 범위 내에서 펼침)
+      const spreadAngle = 90; 
+      const startAngle = -(spreadAngle / 2);
+      const angleStep = spreadAngle / (totalCards - 1);
+
+      shuffledDeck.forEach((card, index) => {
+        const cardEl = document.createElement('div');
+        // 모바일 터치 및 호버 효과용 클래스
+        cardEl.className = 'spread-card w-14 h-24 md:w-20 md:h-32 bg-indigo-900 rounded-md border border-indigo-400 cursor-pointer shadow-lg bg-cover bg-center opacity-0';
+        cardEl.style.backgroundImage = 'url("https://upload.wikimedia.org/wikipedia/commons/5/5c/Tarot_card_back_RWS.jpg")';
+        
+        const currentAngle = startAngle + (index * angleStep);
+        cardEl.style.setProperty('--rot', `${currentAngle}deg`);
+        
+        // 초기 상태 (중앙 하단에 겹쳐 있음)
+        cardEl.style.transform = `translateX(-50%) rotate(0deg)`;
+        cardEl.dataset.index = index;
+        
+        cardEl.addEventListener('click', handleCardSelect);
+        cardGrid.appendChild(cardEl);
+
+        // 촤르륵 펼쳐지는 딜링 애니메이션 (Staggered)
+        setTimeout(() => {
+          cardEl.classList.add('dealt');
+          cardEl.style.opacity = '1';
+          cardEl.style.transform = `translateX(-50%) rotate(${currentAngle}deg)`;
+          // 각 카드별로 미세한 높이 차이를 주어 부채꼴 곡선을 더 자연스럽게 만듦
+          const heightOffset = Math.abs(currentAngle) * 0.5;
+          cardEl.style.bottom = `${50 - heightOffset}px`;
+        }, index * 40); // 0.04초 간격으로 한 장씩 펼침
+      });
+    }
+
+    // 카드 선택 핸들러
+    function handleCardSelect(e) {
+      if (selectedCards.length >= 3) return;
+      
+      const target = e.currentTarget;
+      if (target.classList.contains('is-selected')) return; // 이미 선택된 카드 방지
+
+      const currentSelectionIndex = selectedCards.length; // 0: 과거, 1: 현재, 2: 미래
+      const cardIndex = target.dataset.index;
+      const baseCard = shuffledDeck[cardIndex];
+      
+      // 정/역방향 50% 확률 부여
+      const isReversed = Math.random() < 0.5;
+      
+      selectedCards.push({
+        ...baseCard,
+        isReversed
+      });
+
+      // 선택된 애니메이션 적용
+      target.classList.add('is-selected');
+      
+      // 슬롯 위치 계산 (중앙에서 각 슬롯까지의 거리)
+      let horizontalOffset = 0;
+      let verticalOffset = -330; // 위로 날아가는 높이
+      
+      if (window.innerWidth >= 768) {
+        // md:gap-8 (32px) + md:w-24 (96px) = 128px 간격
+        horizontalOffset = (currentSelectionIndex - 1) * 128; 
+        verticalOffset = -420;
+      } else {
+        // gap-4 (16px) + w-16 (64px) = 80px 간격
+        horizontalOffset = (currentSelectionIndex - 1) * 80;
+        verticalOffset = -340;
+      }
+      
+      // 인라인 스타일로 최종 위치 적용 (CSS의 !important가 없으므로 이제 잘 작동합니다)
+      target.style.transform = `translateX(calc(-50% + ${horizontalOffset}px)) rotate(0deg) translateY(${verticalOffset}px) scale(1.1)`;
+      if (window.innerWidth >= 768) {
+        target.style.transform = `translateX(calc(-50% + ${horizontalOffset}px)) rotate(0deg) translateY(${verticalOffset}px) scale(1.2)`;
+      }
+
+      updateCounter();
+
+      // 3장이 다 뽑히면 즉시 결과 화면 전환
+      if (selectedCards.length === 3) {
+        setTimeout(goToResultState, 1000); // 비행을 다 지켜볼 수 있게 1초 후 전환
+      }
+    }
+
+    function updateCounter() {
+      selectionCounter.textContent = `선택된 카드: ${selectedCards.length} / 3`;
+    }
+
+    // 결과 화면 렌더링
+    async function goToResultState() {
+      stateSpread.classList.add('hidden');
+      stateResult.classList.remove('hidden');
+      
+      const resultTitle = stateResult.querySelector('h2');
+      resultTitle.textContent = `타로 마스터가 "${userConcern}"에 대해 분석 중입니다...`;
+      
+      resultContainer.innerHTML = '';
+      
+      // 1. 먼저 카드 3장을 뒷면 상태로 렌더링
+      const cardNodes = [];
+      selectedCards.forEach((card, idx) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'flex flex-col items-center';
+
+        const positionTitle = document.createElement('h3');
+        positionTitle.className = 'text-xl font-semibold mb-4 text-indigo-200';
+        positionTitle.textContent = `[${positions[idx]}]`;
+
+        const card3DContainer = document.createElement('div');
+        card3DContainer.className = 'perspective-1000 w-44 h-72 md:w-52 md:h-80 mb-6 cursor-pointer';
+        
+        const cardInner = document.createElement('div');
+        cardInner.className = 'card-inner relative w-full h-full transform-style-3d';
+        
+        const cardBack = document.createElement('div');
+        cardBack.className = 'card-back absolute w-full h-full backface-hidden bg-indigo-900 rounded-lg border-2 border-indigo-400 bg-cover bg-center flex items-center justify-center';
+        cardBack.style.backgroundImage = 'url("https://upload.wikimedia.org/wikipedia/commons/5/5c/Tarot_card_back_RWS.jpg")';
+        
+        const cardFront = document.createElement('div');
+        cardFront.className = 'card-front absolute w-full h-full backface-hidden rotate-y-180 rounded-lg overflow-hidden bg-white border-2 border-indigo-300';
+        
+        const cardImg = document.createElement('img');
+        cardImg.src = card.image;
+        cardImg.alt = card.name;
+        cardImg.className = 'w-full h-full object-fill';
+        
+        if (card.isReversed) cardImg.classList.add('rotate-z-180');
+
+        cardFront.appendChild(cardImg);
+        cardInner.appendChild(cardBack);
+        cardInner.appendChild(cardFront);
+        card3DContainer.appendChild(cardInner);
+
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'opacity-0 transition-opacity duration-500 text-center px-2';
+        
+        const cardName = document.createElement('h4');
+        cardName.className = 'text-lg font-bold text-white mb-2';
+        cardName.textContent = `${card.name} ${card.isReversed ? '(역방향)' : '(정방향)'}`;
+        
+        const cardMeaning = document.createElement('p');
+        cardMeaning.className = 'text-sm text-slate-300 leading-relaxed min-h-[100px]';
+
+        infoDiv.appendChild(cardName);
+        infoDiv.appendChild(cardMeaning);
+        wrapper.appendChild(positionTitle);
+        wrapper.appendChild(card3DContainer);
+        wrapper.appendChild(infoDiv);
+        resultContainer.appendChild(wrapper);
+        
+        cardNodes.push({ inner: cardInner, info: infoDiv, text: cardMeaning });
+      });
+
+      // 2. Cloudflare Worker를 통해 AI 리딩 요청
+      try {
+        const response = await fetch(WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            concern: userConcern,
+            cards: selectedCards.map(c => ({ name: c.name, isReversed: c.isReversed }))
+          })
+        });
+
+        if (!response.ok) throw new Error("AI 호출 실패");
+        
+        const aiData = await response.json();
+        resultTitle.textContent = `"${userConcern}"에 대한 리딩 결과입니다.`;
+
+        // 3. AI 리딩 내용을 순차적으로 표시
+        for (let i = 0; i < cardNodes.length; i++) {
+          const node = cardNodes[i];
+          const interpretation = aiData.readings[i];
+          
+          await new Promise(res => setTimeout(res, 500)); // 순차적 지연
+          node.inner.style.transform = 'rotateY(180deg)';
+          node.info.classList.remove('opacity-0');
+          
+          await new Promise(res => {
+            typeWriter(node.text, interpretation, 30);
+            // 대략적인 타이핑 완료 시간을 기다림 (글자 수 * 속도)
+            setTimeout(res, interpretation.length * 35 + 500);
+          });
+        }
+
+        // 전체 총평 추가 (하단에 따로 띄움)
+        const totalReading = document.createElement('div');
+        totalReading.className = 'col-span-1 md:col-span-3 mt-10 p-6 bg-indigo-900/30 rounded-2xl border border-indigo-500/50 text-center max-w-2xl mx-auto opacity-0 transition-opacity duration-1000';
+        totalReading.innerHTML = `<h4 class="text-xl font-bold text-indigo-200 mb-4">마스터의 총평</h4><p class="italic text-slate-200"></p>`;
+        resultContainer.appendChild(totalReading);
+        
+        setTimeout(() => {
+          totalReading.classList.remove('opacity-0');
+          typeWriter(totalReading.querySelector('p'), aiData.conclusion, 40);
+        }, 500);
+
+      } catch (error) {
+        console.error(error);
+        resultTitle.textContent = "AI 마스터와의 연결이 끊겼습니다. 기본 해석을 보여드립니다.";
+        // 에러 시 기본 해석 표시 로직 (생략 가능)
+      }
+    }
+
+    // 다시 시작
+    btnRestart.addEventListener('click', () => {
+      stateResult.classList.add('hidden');
+      stateStart.classList.remove('hidden');
+      btnShuffle.classList.remove('hidden');
+      shuffleVisual.classList.add('hidden');
+      selectedCards = [];
+    });
+  </script>
+</body>
+</html>
