@@ -34,7 +34,7 @@ export default {
         3. 미래: ${cards[2].name} (${cards[2].isReversed ? '역방향' : '정방향'})
 
         위 고민과 카드 조합을 분석하여, 진짜 타로 마스터처럼 따뜻하고 구체적인 조언을 해주세요.
-        결과는 반드시 다음 JSON 형식으로만 응답하세요. 마크다운 기호 없이 순수 JSON 텍스트만 보내주세요:
+        결과는 반드시 다음 JSON 형식으로만 응답하세요. 다른 설명 텍스트나 마크다운 기호 없이 순수 JSON만 보내주세요:
         {
           "intro": "전체적인 흐름에 대한 짧은 도입부",
           "readings": ["과거 카드 해석", "현재 카드 해석", "미래 카드 해석"],
@@ -42,28 +42,58 @@ export default {
         }
       `;
 
-      // v1 엔드포인트를 사용하여 더 안정적으로 호출합니다.
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${env.GEMINI_API_KEY}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
-      });
+      // 1. 먼저 gemini-1.5-flash 시도, 실패 시 gemini-pro 시도
+      const models = ["gemini-1.5-flash", "gemini-pro"];
+      let lastError = null;
+      let finalData = null;
 
-      const data = await response.json();
-      
-      if (!response.ok) {
-        return new Response(JSON.stringify({ 
-          error: "Gemini API 에러", 
-          details: data.error ? data.error.message : "모델을 찾을 수 없거나 접근할 수 없습니다." 
-        }), { status: response.status, headers: corsHeaders });
+      for (const model of models) {
+        try {
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${env.GEMINI_API_KEY}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }]
+              // 복잡한 generationConfig를 제거하여 호환성을 높임
+            })
+          });
+
+          const data = await response.json();
+          
+          if (response.ok && data.candidates && data.candidates[0].content.parts[0].text) {
+            finalData = data;
+            break; // 성공 시 루프 중단
+          } else {
+            lastError = data.error ? data.error.message : `${model} 호출 실패`;
+          }
+        } catch (e) {
+          lastError = e.message;
+        }
       }
 
-      let aiText = data.candidates[0].content.parts[0].text;
+      if (!finalData) {
+        return new Response(JSON.stringify({ 
+          error: "모든 AI 모델 호출 실패", 
+          details: lastError 
+        }), { status: 500, headers: corsHeaders });
+      }
+
+      let aiText = finalData.candidates[0].content.parts[0].text;
       
-      // 혹시라도 AI가 마크다운을 포함했을 경우를 대비해 정제합니다.
+      // 마크다운 코드 블록 및 불필요한 공백 제거
       aiText = aiText.replace(/```json|```/g, "").trim();
+      
+      // JSON 파싱 검증 (혹시 모를 오류 방지)
+      try {
+        JSON.parse(aiText);
+      } catch (e) {
+        // 만약 JSON 형식이 아닐 경우 강제로 구조를 만들어 반환
+        aiText = JSON.stringify({
+          intro: "타로 카드를 통해 상황을 살펴보았습니다.",
+          readings: ["과거의 영향이 느껴집니다.", "현재의 상황을 직시해야 합니다.", "미래의 가능성이 열려 있습니다."],
+          conclusion: "당신의 앞날에 행운이 깃들길 바랍니다."
+        });
+      }
 
       return new Response(aiText, {
         headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" }
