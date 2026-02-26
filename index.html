@@ -294,6 +294,16 @@
     const btnRestart = document.getElementById('btn-restart');
 
     // [3. 핵심 자바스크립트 로직]
+    // Fisher-Yates 셔플 알고리즘
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
     // 타이핑 애니메이션 효과
     function typeWriter(element, text, speed = 40) {
       let i = 0;
