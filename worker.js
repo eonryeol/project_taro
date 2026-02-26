@@ -27,7 +27,7 @@ export default {
         3. 미래: ${cards[2].name} (${cards[2].isReversed ? '역방향' : '정방향'})
 
         위 고민과 카드 조합을 분석하여, 진짜 타로 마스터처럼 따뜻하고 구체적인 조언을 해주세요.
-        결과는 반드시 다음 JSON 형식으로만 응답하세요:
+        결과는 반드시 다음 JSON 형식으로만 응답하세요. 다른 텍스트는 절대 포함하지 마세요:
         {
           "intro": "전체적인 흐름에 대한 짧은 도입부",
           "readings": ["과거 카드 해석", "현재 카드 해석", "미래 카드 해석"],
@@ -39,29 +39,32 @@ export default {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { 
-            response_mime_type: "application/json" 
-          }
+          contents: [{ parts: [{ text: prompt }] }]
         })
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Gemini API Error: ${errorText}`);
+        const errorData = await response.text();
+        return new Response(JSON.stringify({ error: "Gemini API 호출 실패", details: errorData }), {
+          status: response.status,
+          headers: corsHeaders
+        });
       }
 
       const data = await response.json();
-      const aiResponse = data.candidates[0].content.parts[0].text;
+      let aiText = data.candidates[0].content.parts[0].text;
 
-      return new Response(aiResponse, {
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      // 마크다운 코드 블록 제거 로직 추가 (매우 중요)
+      aiText = aiText.replace(/```json|```/g, "").trim();
+
+      return new Response(aiText, {
+        headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" }
       });
 
     } catch (error) {
-      return new Response(JSON.stringify({ error: error.message }), {
+      return new Response(JSON.stringify({ error: "서버 내부 에러", message: error.message }), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
+        headers: corsHeaders
       });
     }
   },

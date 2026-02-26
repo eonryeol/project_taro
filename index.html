@@ -510,6 +510,8 @@
         if (!response.ok) throw new Error("AI 호출 실패");
         
         const aiData = await response.json();
+        console.log("AI Response Received:", aiData); // 디버깅용 로그 추가
+        
         resultTitle.textContent = `"${userConcern}"에 대한 리딩 결과입니다.`;
 
         // 3. AI 리딩 내용을 순차적으로 표시
@@ -517,7 +519,7 @@
           const node = cardNodes[i];
           const interpretation = aiData.readings[i];
           
-          await new Promise(res => setTimeout(res, 500)); // 순차적 지연
+          if (!interpretation) continue; // 데이터가 없을 경우 방지
           node.inner.style.transform = 'rotateY(180deg)';
           node.info.classList.remove('opacity-0');
           
