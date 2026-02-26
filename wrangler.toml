@@ -1,4 +1,4 @@
-name = "project-taro-ai-worker"
+name = "tarobot"
 main = "worker.js"
 compatibility_date = "2024-03-20"
 
