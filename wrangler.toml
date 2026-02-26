@@ -1,7 +1,6 @@
-name = "project-taro-ai-worker"
+name = "tarobot"
 main = "worker.js"
 compatibility_date = "2024-03-20"
 
 [vars]
-# GEMINI_API_KEY 는 Cloudflare 대시보드에서 비밀(Secret)로 등록하는 것을 권장합니다.
-# 하지만 로컬 테스트용 환경 변수를 미리 선언해 둡니다.
+# GEMINI_API_KEY 는 Cloudflare 대시보드에서 꼭 등록해주세요.
