@@ -14,11 +14,10 @@ export default {
       return new Response("Method Not Allowed", { status: 405 });
     }
 
-    // API 키 체크
     if (!env.GEMINI_API_KEY) {
       return new Response(JSON.stringify({ 
         error: "설정 오류", 
-        message: "Cloudflare 대시보드에 GEMINI_API_KEY 환경 변수가 등록되지 않았습니다." 
+        message: "GEMINI_API_KEY 환경 변수가 등록되지 않았습니다." 
       }), { status: 401, headers: corsHeaders });
     }
 
@@ -35,7 +34,7 @@ export default {
         3. 미래: ${cards[2].name} (${cards[2].isReversed ? '역방향' : '정방향'})
 
         위 고민과 카드 조합을 분석하여, 진짜 타로 마스터처럼 따뜻하고 구체적인 조언을 해주세요.
-        결과는 반드시 다음 JSON 형식으로만 응답하세요:
+        결과는 반드시 다음 JSON 형식으로만 응답하세요. 마크다운 기호 없이 순수 JSON 텍스트만 보내주세요:
         {
           "intro": "전체적인 흐름에 대한 짧은 도입부",
           "readings": ["과거 카드 해석", "현재 카드 해석", "미래 카드 해석"],
@@ -43,14 +42,12 @@ export default {
         }
       `;
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${env.GEMINI_API_KEY}`, {
+      // v1 엔드포인트를 사용하여 더 안정적으로 호출합니다.
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${env.GEMINI_API_KEY}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            response_mime_type: "application/json"
-          }
+          contents: [{ parts: [{ text: prompt }] }]
         })
       });
 
@@ -59,11 +56,15 @@ export default {
       if (!response.ok) {
         return new Response(JSON.stringify({ 
           error: "Gemini API 에러", 
-          details: data.error ? data.error.message : "알 수 없는 오류" 
+          details: data.error ? data.error.message : "모델을 찾을 수 없거나 접근할 수 없습니다." 
         }), { status: response.status, headers: corsHeaders });
       }
 
-      const aiText = data.candidates[0].content.parts[0].text;
+      let aiText = data.candidates[0].content.parts[0].text;
+      
+      // 혹시라도 AI가 마크다운을 포함했을 경우를 대비해 정제합니다.
+      aiText = aiText.replace(/```json|```/g, "").trim();
+
       return new Response(aiText, {
         headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" }
       });
