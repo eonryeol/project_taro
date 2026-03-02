@@ -2,200 +2,175 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tarot Reading - Horseshoe & Full Moon</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Premium Tarot AI</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* 3D Flip 및 애니메이션 관련 커스텀 CSS */
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&display=swap');
+    body { font-family: 'Noto Serif KR', serif; background: #020617; color: #e2e8f0; overflow: hidden; }
+    
     .perspective-1000 { perspective: 1000px; }
     .transform-style-3d { transform-style: preserve-3d; }
     .backface-hidden { backface-visibility: hidden; }
     .rotate-y-180 { transform: rotateY(180deg); }
     .rotate-z-180 { transform: rotateZ(180deg); }
-    
-    .card-inner {
-      transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    /* 스프레드 카드 기본 위치 및 부채꼴 애니메이션 */
+
+    /* 부채꼴 카드 기본 스타일 */
     .spread-card {
       position: absolute;
       left: 50%;
       bottom: 20px;
       transform-origin: center center;
-      transition: all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
-      z-index: 1;
-      transform: translateX(calc(-50% + var(--tx, 0px))) translateY(var(--ty, 0px)) rotate(var(--rot, 0deg));
+      transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 10;
+      /* 초기 위치는 화면 중앙 하단 */
+      transform: translateX(-50%) translateY(0) rotate(0deg);
     }
 
-    /* 선택되지 않은 카드 호버 효과 */
     .spread-card.dealt:not(.is-selected):hover {
       z-index: 100 !important;
-      transform: translateX(calc(-50% + var(--tx, 0px))) translateY(calc(var(--ty, 0px) - 50px)) rotate(var(--rot, 0deg)) scale(1.25) !important;
-      filter: brightness(1.2) drop-shadow(0 0 35px rgba(129, 140, 248, 0.9));
-      border-color: #a5b4fc;
-    }
-
-    #card-grid {
-      position: relative;
-      height: 320px;
-      margin-top: 0px;
-      perspective: 3000px;
-      width: 100%;
-      overflow: visible;
+      transform: translateX(calc(-50% + var(--tx, 0px))) translateY(calc(var(--ty, 0px) - 60px)) rotate(var(--rot, 0deg)) scale(1.4) !important;
+      filter: brightness(1.3) drop-shadow(0 0 25px rgba(99, 102, 241, 0.9));
     }
 
     /* 선택된 카드: 부채꼴 안쪽(슬롯)으로 이동하며 크기 축소 */
     .spread-card.is-selected {
       z-index: 500 !important;
-      opacity: 1 !important;
       pointer-events: none;
-      filter: brightness(1.1) drop-shadow(0 0 25px rgba(129, 140, 248, 0.7));
-      transform: translateX(calc(-50% + var(--tx, 0px))) translateY(var(--ty, 0px)) rotate(var(--rot, 0deg)) scale(0.75) !important;
+      filter: drop-shadow(0 0 20px rgba(129, 140, 248, 0.6));
+      transform: translateX(calc(-50% + var(--tx, 0px))) translateY(var(--ty, 0px)) rotate(var(--rot, 0deg)) scale(var(--sc, 0.65)) !important;
     }
 
-    /* 배열법 선택 카드 스타일 */
-    .spread-type-card {
-      @apply bg-slate-800 border-2 border-indigo-900/50 rounded-2xl p-3 cursor-pointer transition-all hover:border-indigo-500 hover:bg-slate-700/50 flex flex-col items-center text-center;
-    }
-    .spread-type-card.active {
-      @apply border-indigo-400 bg-indigo-900/30 ring-2 ring-indigo-500/50;
-    }
-
-    /* 슬롯 컨테이너 (부채꼴 바로 위에 위치하도록 높이 조절) */
-    #selected-slots {
-      position: relative;
-      height: 380px;
-      width: 100%;
-      max-width: 700px;
-      margin: 0 auto;
-    }
-
+    /* 슬롯 스타일 */
     .slot {
-      @apply border-2 border-dashed border-indigo-700/30 rounded-lg flex flex-col items-center justify-center absolute transition-all duration-700;
-      width: 65px;
-      height: 104px;
+      @apply border border-indigo-500/20 rounded-lg flex items-center justify-center absolute transition-all duration-700;
       background: rgba(30, 41, 59, 0.4);
+      width: 60px; height: 96px;
     }
-    @media (min-width: 768px) {
-      .slot { width: 80px; height: 128px; }
-    }
+    @media (min-width: 768px) { .slot { width: 85px; height: 136px; } }
 
     .slot-label {
-      @apply text-[10px] md:text-xs text-indigo-400 font-medium absolute -bottom-6 w-max whitespace-nowrap bg-slate-900/80 px-1 rounded;
+      @apply text-[9px] md:text-[11px] text-indigo-300/70 font-medium absolute -bottom-5 w-max whitespace-nowrap bg-black/40 px-1 rounded;
     }
 
-    /* 셔플 애니메이션 */
-    @keyframes shuffle-anim {
-      0% { transform: translate(0, 0) rotate(0deg); }
-      25% { transform: translate(30px, -20px) rotate(10deg); }
-      50% { transform: translate(-30px, 10px) rotate(-10deg); }
-      75% { transform: translate(15px, 25px) rotate(5deg); }
-      100% { transform: translate(0, 0) rotate(0deg); }
+    /* 배열법 선택 카드 */
+    .spread-type-card {
+      @apply bg-slate-900 border-2 border-slate-800 rounded-xl p-3 cursor-pointer transition-all hover:border-indigo-500;
     }
-    .shuffling {
-      animation: shuffle-anim 0.35s ease-in-out infinite;
+    .spread-type-card.active { @apply border-indigo-500 bg-indigo-950/20 ring-1 ring-indigo-500; }
+
+    /* 결과창 애니메이션 */
+    .shuffling { animation: shuffle-move 0.4s infinite ease-in-out; }
+    @keyframes shuffle-move {
+      0%, 100% { transform: translate(0,0); }
+      25% { transform: translate(15px, -10px) rotate(5deg); }
+      75% { transform: translate(-15px, 5px) rotate(-5deg); }
     }
+
+    /* 스크롤 방지용 전체 레이아웃 */
+    #app-container { height: 100vh; display: flex; flex-direction: column; }
+    .state-section { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; width: 100%; max-width: 1200px; margin: 0 auto; }
   </style>
 </head>
-<body class="bg-slate-900 text-white min-h-screen font-sans overflow-x-hidden selection:bg-indigo-500">
+<body>
 
-  <main id="app-container" class="container mx-auto px-4 py-8 h-full flex flex-col items-center justify-center min-h-screen">
+  <main id="app-container">
     
-    <section id="state-start" class="text-center w-full flex flex-col items-center">
-      <h1 class="text-4xl md:text-5xl font-bold mb-6 tracking-wider text-indigo-300">TAROT READING</h1>
-      <p class="text-slate-400 mb-8 max-w-md mx-auto">당신만의 특별한 배열법을 선택하고 마스터의 조언을 들어보세요.</p>
+    <!-- START STATE -->
+    <section id="state-start" class="state-section overflow-y-auto">
+      <h1 class="text-3xl md:text-5xl font-bold mb-4 tracking-tighter text-indigo-400">TAROT MASTER AI</h1>
+      <p class="text-slate-400 text-sm md:text-base mb-6 text-center">당신의 운명을 읽어내는 정교한 타로 상담</p>
       
-      <div class="w-full max-w-4xl mb-10 space-y-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="space-y-4">
-            <div class="flex flex-col gap-2 text-left">
-              <label class="text-indigo-300 text-sm font-semibold ml-1">생년월일</label>
-              <div class="flex gap-2">
-                <select id="birth-year" class="flex-1 bg-slate-800 border-2 border-indigo-900/50 rounded-xl px-3 py-2 text-white focus:border-indigo-500 focus:outline-none transition-all cursor-pointer appearance-none"></select>
-                <select id="birth-month" class="w-20 bg-slate-800 border-2 border-indigo-900/50 rounded-xl px-3 py-2 text-white focus:border-indigo-500 focus:outline-none transition-all cursor-pointer appearance-none"></select>
-                <select id="birth-day" class="w-20 bg-slate-800 border-2 border-indigo-900/50 rounded-xl px-3 py-2 text-white focus:border-indigo-500 focus:outline-none transition-all cursor-pointer appearance-none"></select>
-              </div>
+      <div class="w-full grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="space-y-4">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-indigo-300 text-xs font-bold uppercase ml-1">Birth & Gender</label>
+            <div class="flex gap-2">
+              <select id="birth-year" class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"></select>
+              <select id="birth-month" class="w-20 bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"></select>
+              <select id="birth-day" class="w-20 bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"></select>
             </div>
-            <div class="flex flex-col gap-2 text-left">
-              <label class="text-indigo-300 text-sm font-semibold ml-1">성별</label>
-              <select id="user-gender" class="w-full bg-slate-800 border-2 border-indigo-900/50 rounded-xl px-3 py-2 text-white focus:border-indigo-500 focus:outline-none transition-all cursor-pointer appearance-none">
-                <option value="male">남성</option>
-                <option value="female">여성</option>
-              </select>
-            </div>
-            <div class="flex flex-col gap-2 text-left">
-              <label class="text-indigo-300 text-sm font-semibold ml-1">고민 내용</label>
-              <textarea id="user-concern" 
-                class="w-full h-32 p-4 bg-slate-800 border-2 border-indigo-900/50 rounded-xl text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none transition-all resize-none shadow-inner"
-                placeholder="어떤 것이 궁금하신가요?"></textarea>
-            </div>
+            <select id="user-gender" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-sm text-white mt-1">
+              <option value="male">남성 (Male)</option>
+              <option value="female">여성 (Female)</option>
+            </select>
           </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-indigo-300 text-xs font-bold uppercase ml-1">Your Question</label>
+            <textarea id="user-concern" 
+              class="w-full h-24 p-3 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-none"
+              placeholder="무엇이 궁금하신가요? 구체적일수록 정확한 답을 얻을 수 있습니다."></textarea>
+          </div>
+        </div>
 
-          <div class="flex flex-col gap-2 text-left w-full">
-            <label class="text-indigo-300 text-sm font-semibold ml-1">배열법 선택</label>
-            <div id="spread-selector" class="flex flex-col gap-3 w-full">
-              <!-- 선택 옵션들 -->
-              <div class="spread-type-card active flex flex-row items-center justify-between p-4" data-spread="one">
-                <div class="flex flex-col text-left"><span class="text-lg font-bold text-indigo-200">원 카드</span><span class="text-xs text-slate-400 mt-1">심플하고 명확한 해답 (1장)</span></div>
-                <div class="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio"><div class="w-3 h-3 rounded-full bg-indigo-400 opacity-100"></div></div>
-              </div>
-              <div class="spread-type-card flex flex-row items-center justify-between p-4" data-spread="three">
-                <div class="flex flex-col text-left"><span class="text-lg font-bold text-indigo-200">쓰리 카드</span><span class="text-xs text-slate-400 mt-1">과거, 현재, 미래 분석 (3장)</span></div>
-                <div class="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio"><div class="w-3 h-3 rounded-full bg-indigo-400 opacity-0"></div></div>
-              </div>
-              <div class="spread-type-card flex flex-row items-center justify-between p-4" data-spread="horseshoe">
-                <div class="flex flex-col text-left"><span class="text-lg font-bold text-indigo-200">말발굽</span><span class="text-xs text-slate-400 mt-1">과거~미래 흐름과 조언 (7장)</span></div>
-                <div class="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio"><div class="w-3 h-3 rounded-full bg-indigo-400 opacity-0"></div></div>
-              </div>
-              <div class="spread-type-card flex flex-row items-center justify-between p-4" data-spread="fullmoon">
-                <div class="flex flex-col text-left"><span class="text-lg font-bold text-indigo-200">보름달</span><span class="text-xs text-slate-400 mt-1">에너지 상태와 목표 성찰 (7장)</span></div>
-                <div class="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio"><div class="w-3 h-3 rounded-full bg-indigo-400 opacity-0"></div></div>
-              </div>
-              <div class="spread-type-card flex flex-row items-center justify-between p-4" data-spread="celtic">
-                <div class="flex flex-col text-left"><span class="text-lg font-bold text-indigo-200">켈틱 크로스</span><span class="text-xs text-slate-400 mt-1">문제의 심층적 진단 (10장)</span></div>
-                <div class="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio"><div class="w-3 h-3 rounded-full bg-indigo-400 opacity-0"></div></div>
-              </div>
-              <div class="spread-type-card flex flex-row items-center justify-between p-4" data-spread="tree">
-                <div class="flex flex-col text-left"><span class="text-lg font-bold text-indigo-200">생명의 나무</span><span class="text-xs text-slate-400 mt-1">내외부 상황의 총체적 관망 (10장)</span></div>
-                <div class="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio"><div class="w-3 h-3 rounded-full bg-indigo-400 opacity-0"></div></div>
-              </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-indigo-300 text-xs font-bold uppercase ml-1">Select Spread</label>
+          <div id="spread-selector" class="grid grid-cols-2 gap-2 h-full">
+            <div class="spread-type-card active" data-spread="one">
+              <div class="flex justify-between items-start"><span class="font-bold text-indigo-100 text-sm">원 카드</span><div class="w-3 h-3 rounded-full border border-indigo-500 flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full bg-indigo-400"></div></div></div>
+              <p class="text-[10px] text-slate-500 mt-1">명쾌한 한 줄 해답</p>
+            </div>
+            <div class="spread-type-card" data-spread="three">
+              <div class="flex justify-between items-start"><span class="font-bold text-indigo-100 text-sm">쓰리 카드</span><div class="w-3 h-3 rounded-full border border-indigo-500 flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full bg-indigo-400 opacity-0"></div></div></div>
+              <p class="text-[10px] text-slate-500 mt-1">과거·현재·미래 분석</p>
+            </div>
+            <div class="spread-type-card" data-spread="horseshoe">
+              <div class="flex justify-between items-start"><span class="font-bold text-indigo-100 text-sm">말발굽</span><div class="w-3 h-3 rounded-full border border-indigo-500 flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full bg-indigo-400 opacity-0"></div></div></div>
+              <p class="text-[10px] text-slate-500 mt-1">7장의 흐름과 조언</p>
+            </div>
+            <div class="spread-type-card" data-spread="fullmoon">
+              <div class="flex justify-between items-start"><span class="font-bold text-indigo-100 text-sm">보름달</span><div class="w-3 h-3 rounded-full border border-indigo-500 flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full bg-indigo-400 opacity-0"></div></div></div>
+              <p class="text-[10px] text-slate-500 mt-1">내면 성찰과 극복</p>
+            </div>
+            <div class="spread-type-card" data-spread="celtic">
+              <div class="flex justify-between items-start"><span class="font-bold text-indigo-100 text-sm">켈틱 크로스</span><div class="w-3 h-3 rounded-full border border-indigo-500 flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full bg-indigo-400 opacity-0"></div></div></div>
+              <p class="text-[10px] text-slate-500 mt-1">10장의 심층 분석</p>
+            </div>
+            <div class="spread-type-card" data-spread="tree">
+              <div class="flex justify-between items-start"><span class="font-bold text-indigo-100 text-sm">생명의 나무</span><div class="w-3 h-3 rounded-full border border-indigo-500 flex items-center justify-center"><div class="w-1.5 h-1.5 rounded-full bg-indigo-400 opacity-0"></div></div></div>
+              <p class="text-[10px] text-slate-500 mt-1">삶의 총체적 조망</p>
             </div>
           </div>
         </div>
       </div>
 
-      <button id="btn-shuffle" class="px-10 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full text-xl font-semibold transition-all shadow-lg hover:shadow-indigo-500/50">
-        카드를 섞겠습니다
+      <button id="btn-shuffle" class="w-full max-w-sm py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-lg font-bold transition-all shadow-xl shadow-indigo-900/20 active:scale-95">
+        셔플 시작하기
       </button>
-      <div id="shuffle-deck-visual" class="hidden mt-12 w-32 h-48 bg-indigo-900 rounded-xl border-2 border-indigo-400 flex items-center justify-center bg-cover bg-center">
-        <span class="text-white font-bold drop-shadow-md">Shuffling...</span>
+      <div id="shuffle-visual" class="hidden mt-8 w-24 h-36 bg-indigo-900 rounded-lg border-2 border-indigo-400 flex items-center justify-center bg-cover bg-center"></div>
+    </section>
+
+    <!-- SPREAD STATE -->
+    <section id="state-spread" class="state-section hidden relative">
+      <div class="absolute top-4 w-full text-center z-50">
+        <h2 id="selection-guide" class="text-xl font-bold text-indigo-300">카드를 0장 선택하세요</h2>
+        <p id="selection-counter" class="text-slate-500 text-xs mt-1">선택 진행 중...</p>
+      </div>
+      
+      <!-- 카드와 슬롯이 한 공간에서 어우러짐 -->
+      <div id="unified-container" class="relative w-full h-full flex flex-col items-center justify-end pb-8">
+        <div id="selected-slots" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[400px]"></div>
+        <div id="card-grid" class="relative w-full h-48"></div>
       </div>
     </section>
 
-    <section id="state-spread" class="hidden w-full max-w-5xl text-center">
-      <h2 class="text-2xl font-semibold mb-2 text-indigo-300">카드를 선택해 주세요</h2>
-      <p id="selection-counter" class="text-slate-400 mb-6">선택된 카드: 0 / 0</p>
-      
-      <div id="selected-slots" class="relative"></div>
-      <div id="card-grid" class="flex flex-wrap justify-center relative"></div>
-    </section>
-
-    <section id="state-result" class="hidden w-full max-w-5xl">
-      <h2 class="text-3xl font-bold mb-10 text-center text-indigo-300">타로 리딩 결과</h2>
-      <div id="result-container"></div>
-      <div class="mt-12 text-center">
-        <button id="btn-restart" class="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-full font-semibold transition-all">다시 뽑기</button>
+    <!-- RESULT STATE -->
+    <section id="state-result" class="state-section hidden overflow-y-auto">
+      <div class="w-full max-w-5xl py-8">
+        <h2 id="result-title" class="text-2xl md:text-3xl font-bold mb-8 text-center text-indigo-300">리딩 분석 결과</h2>
+        <div id="result-container"></div>
+        <div class="mt-12 text-center">
+          <button id="btn-restart" class="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-full font-bold transition-all">새로운 상담 시작</button>
+        </div>
       </div>
     </section>
 
   </main>
 
   <script>
-    // [설정] Cloudflare Worker URL
     const WORKER_URL = "https://tarobot.1000gkxhd1.workers.dev/";
-
-    // 타로 덱 데이터 (메이저 22장)
+    
+    // 메이저 타로 덱
     const tarotDeck = [
       { id: 0, name: "0. The Fool (바보)", image: "https://upload.wikimedia.org/wikipedia/commons/9/90/RWS_Tarot_00_Fool.jpg" },
       { id: 1, name: "I. The Magician (마법사)", image: "https://upload.wikimedia.org/wikipedia/commons/d/de/RWS_Tarot_01_Magician.jpg" },
@@ -221,72 +196,72 @@
       { id: 21, name: "XXI. The World (세계)", image: "https://upload.wikimedia.org/wikipedia/commons/f/ff/RWS_Tarot_21_World.jpg" }
     ];
 
-    // 배열법 설정
+    // 배열법 정밀 좌표 (Origin: Container Center)
     const spreadConfigs = {
-      one: { name: "원 카드", count: 1, positions: ["해답"], layout: [{ x: 0, y: -80 }] },
-      three: { name: "쓰리 카드", count: 3, positions: ["과거", "현재", "미래"], layout: [{ x: -140, y: -80 }, { x: 0, y: -80 }, { x: 140, y: -80 }] },
+      one: { name: "원 카드", count: 1, positions: ["핵심 해답"], layout: [{ x: 0, y: -20 }] },
+      three: { name: "쓰리 카드", count: 3, positions: ["과거", "현재", "미래"], layout: [{ x: -90, y: -20 }, { x: 0, y: -20 }, { x: 90, y: -20 }] },
       horseshoe: {
-        name: "말발굽", count: 7,
-        positions: ["과거", "현재", "가까운 미래", "조언/대책", "주변 환경", "장애물", "최종 결과"],
-        layout: [{ x: -210, y: 20 }, { x: -140, y: -80 }, { x: -70, y: -160 }, { x: 0, y: -200 }, { x: 70, y: -160 }, { x: 140, y: -80 }, { x: 210, y: 20 }]
+        name: "말발굽", count: 7, 
+        positions: ["과거", "현재", "가까운 미래", "대책/조언", "환경", "장애물", "결과"],
+        layout: [{x:-160, y:60}, {x:-110, y:-30}, {x:-55, y:-100}, {x:0, y:-130}, {x:55, y:-100}, {x:110, y:-30}, {x:160, y:60}]
       },
       fullmoon: {
         name: "보름달", count: 7,
-        positions: ["현재의 삶", "인간관계", "방해 요소", "장애물 극복", "내가 할 일", "외부의 도움", "예상 결과"],
-        layout: [{ x: 0, y: 0 }, { x: -150, y: -50 }, { x: 150, y: -50 }, { x: -100, y: -180 }, { x: 100, y: -180 }, { x: 0, y: -250 }, { x: 0, y: 120 }]
+        positions: ["현재 삶", "인간관계", "방해 요소", "극복 방법", "할 일", "외부 도움", "예상 결과"],
+        layout: [{x:0, y:0}, {x:-120, y:-40}, {x:120, y:-40}, {x:-80, y:-140}, {x:80, y:-140}, {x:0, y:-180}, {x:0, y:100}]
       },
       celtic: {
         name: "켈틱 크로스", count: 10,
-        positions: ["현재 상황", "장애물/도움", "무의식/기반", "과거", "의식/목표", "가까운 미래", "당신의 태도", "주변 환경", "희망과 공포", "최종 결과"],
-        layout: [{ x: -120, y: -50 }, { x: -120, y: -50, rot: 90 }, { x: -120, y: 80 }, { x: -260, y: -50 }, { x: -120, y: -180 }, { x: 20, y: -50 }, { x: 180, y: 130 }, { x: 180, y: 30 }, { x: 180, y: -70 }, { x: 180, y: -170 }]
+        positions: ["현재", "장애", "기반", "과거", "목표", "미래", "태도", "환경", "희망/공포", "결과"],
+        layout: [
+          {x:-100, y:-30}, {x:-100, y:-30, rot:90}, {x:-100, y:80}, {x:-210, y:-30}, {x:-100, y:-140}, {x:10, y:-30},
+          {x:140, y:120}, {x:140, y:40}, {x:140, y:-40}, {x:140, y:-120}
+        ]
       },
       tree: {
         name: "생명의 나무", count: 10,
         positions: ["영성", "지혜", "이해", "자비", "힘", "아름다움", "승리", "영광", "기초", "왕국"],
-        layout: [{ x: 0, y: -280 }, { x: 110, y: -220 }, { x: -110, y: -220 }, { x: 110, y: -110 }, { x: -110, y: -110 }, { x: 0, y: -50 }, { x: 110, y: 60 }, { x: -110, y: 60 }, { x: 0, y: 130 }, { x: 0, y: 240 }]
+        layout: [
+          {x:0, y:-180}, {x:90, y:-140}, {x:-90, y:-140}, {x:90, y:-60}, {x:-90, y:-60}, {x:0, y:-20},
+          {x:90, y:60}, {x:-90, y:60}, {x:0, y:100}, {x:0, y:180}
+        ]
       }
     };
 
     let currentSpread = "one";
-    let shuffledDeck = [];
     let selectedCards = [];
+    let shuffledDeck = [];
     let userConcern = "";
     let userInfo = {};
 
-    // DOM 요소 초기화
-    const stateStart = document.getElementById('state-start');
-    const stateSpread = document.getElementById('state-spread');
-    const stateResult = document.getElementById('state-result');
-    const btnShuffle = document.getElementById('btn-shuffle');
-    const spreadSelector = document.getElementById('spread-selector');
-    const selectedSlots = document.getElementById('selected-slots');
-    const cardGrid = document.getElementById('card-grid');
-
-    // 생년월일 초기화
-    (function initDateSelects() {
-      const yS = document.getElementById('birth-year'), mS = document.getElementById('birth-month'), dS = document.getElementById('birth-day');
+    // 초기 설정
+    (function init() {
+      const year = document.getElementById('birth-year');
+      const month = document.getElementById('birth-month');
+      const day = document.getElementById('birth-day');
       const curY = new Date().getFullYear();
-      for(let y=curY; y>=curY-100; y--) yS.add(new Option(y+"년", y));
-      for(let m=1; m<=12; m++) mS.add(new Option(m+"월", m));
-      for(let d=1; d<=31; d++) dS.add(new Option(d+"일", d));
+      for(let i=curY; i>=curY-80; i--) year.add(new Option(i+'년', i));
+      for(let i=1; i<=12; i++) month.add(new Option(i+'월', i));
+      for(let i=1; i<=31; i++) day.add(new Option(i+'일', i));
+      
+      document.getElementById('shuffle-visual').style.backgroundImage = 'url("https://upload.wikimedia.org/wikipedia/commons/5/5c/Tarot_card_back_RWS.jpg")';
     })();
 
     // 배열법 선택
-    spreadSelector.addEventListener('click', (e) => {
+    document.getElementById('spread-selector').addEventListener('click', (e) => {
       const card = e.target.closest('.spread-type-card');
-      if (!card) return;
+      if(!card) return;
       document.querySelectorAll('.spread-type-card').forEach(c => {
         c.classList.remove('active');
-        const dot = c.querySelector('.spread-radio div');
-        if (dot) dot.style.opacity = '0';
+        c.querySelector('.w-1.5').classList.add('opacity-0');
       });
       card.classList.add('active');
-      const activeDot = card.querySelector('.spread-radio div');
-      if (activeDot) activeDot.style.opacity = '1';
+      card.querySelector('.w-1.5').classList.remove('opacity-0');
       currentSpread = card.dataset.spread;
     });
 
-    btnShuffle.addEventListener('click', () => {
+    // 셔플 로직
+    document.getElementById('btn-shuffle').addEventListener('click', () => {
       userConcern = document.getElementById('user-concern').value.trim() || "나의 전체적인 운세";
       userInfo = {
         year: document.getElementById('birth-year').value,
@@ -294,133 +269,169 @@
         day: document.getElementById('birth-day').value,
         gender: document.getElementById('user-gender').value
       };
-      btnShuffle.classList.add('hidden');
-      const visual = document.getElementById('shuffle-deck-visual');
+      
+      document.getElementById('btn-shuffle').classList.add('hidden');
+      const visual = document.getElementById('shuffle-visual');
       visual.classList.remove('hidden');
       visual.classList.add('shuffling');
-      visual.style.backgroundImage = 'url("https://upload.wikimedia.org/wikipedia/commons/5/5c/Tarot_card_back_RWS.jpg")';
       
       setTimeout(() => {
         shuffledDeck = [...tarotDeck].sort(() => Math.random() - 0.5);
-        goToSpreadState();
-      }, 1500);
+        startReading();
+      }, 1200);
     });
 
-    function goToSpreadState() {
-      stateStart.classList.add('hidden');
-      stateSpread.classList.remove('hidden');
+    function startReading() {
+      document.getElementById('state-start').classList.add('hidden');
+      document.getElementById('state-spread').classList.remove('hidden');
       const config = spreadConfigs[currentSpread];
-      document.getElementById('selection-counter').textContent = `선택된 카드: 0 / ${config.count}`;
+      document.getElementById('selection-guide').textContent = `카드를 ${config.count}장 선택해 주세요`;
       
-      selectedSlots.innerHTML = '';
+      const slotsDiv = document.getElementById('selected-slots');
+      slotsDiv.innerHTML = '';
       config.layout.forEach((pos, i) => {
         const slot = document.createElement('div');
         slot.className = 'slot';
         slot.style.left = `calc(50% + ${pos.x}px)`;
         slot.style.top = `calc(50% + ${pos.y}px)`;
-        slot.style.transform = `translate(-50%, -50%) ${pos.rot ? `rotate(${pos.rot}deg)` : ''}`;
-        const lbl = document.createElement('span');
-        lbl.className = 'slot-label'; lbl.textContent = config.positions[i];
-        slot.appendChild(lbl);
-        selectedSlots.appendChild(slot);
+        if(pos.rot) slot.style.transform = `translate(-50%, -50%) rotate(${pos.rot}deg)`;
+        else slot.style.transform = `translate(-50%, -50%)`;
+        
+        const label = document.createElement('span');
+        label.className = 'slot-label';
+        label.textContent = config.positions[i];
+        slot.appendChild(label);
+        slotsDiv.appendChild(slot);
       });
 
-      cardGrid.innerHTML = '';
-      const radius = window.innerWidth > 768 ? 750 : 450;
-      const angleStep = 150 / (shuffledDeck.length - 1);
-      
+      renderDeck();
+    }
+
+    function renderDeck() {
+      const grid = document.getElementById('card-grid');
+      grid.innerHTML = '';
+      const total = shuffledDeck.length;
+      const radius = window.innerWidth > 768 ? 700 : 400;
+      const angleRange = 150;
+      const angleStep = angleRange / (total - 1);
+
       shuffledDeck.forEach((card, i) => {
         const el = document.createElement('div');
-        el.className = 'spread-card w-12 h-20 md:w-16 md:h-28 bg-indigo-950 rounded-lg border border-indigo-400/30 cursor-pointer shadow-2xl bg-cover bg-center opacity-0';
+        el.className = 'spread-card w-14 h-22 md:w-20 md:h-32 bg-indigo-950 rounded-lg border border-indigo-400/30 cursor-pointer shadow-xl bg-cover bg-center opacity-0';
         el.style.backgroundImage = 'url("https://upload.wikimedia.org/wikipedia/commons/5/5c/Tarot_card_back_RWS.jpg")';
-        const angle = -75 + (i * angleStep);
+        
+        const angle = -(angleRange/2) + (i * angleStep);
         const rad = angle * (Math.PI / 180);
-        const tx = Math.sin(rad) * radius, ty = (1 - Math.cos(rad)) * radius;
+        const tx = Math.sin(rad) * radius;
+        const ty = -(1 - Math.cos(rad)) * radius; // 위로 완만하게 굽은 형태
+        
         el.dataset.index = i;
-        el.addEventListener('click', handleCardSelect);
-        cardGrid.appendChild(el);
+        el.addEventListener('click', selectCard);
+        grid.appendChild(el);
+        
         setTimeout(() => {
           el.classList.add('dealt');
           el.style.opacity = '1';
           el.style.setProperty('--tx', `${tx}px`);
           el.style.setProperty('--ty', `${ty}px`);
           el.style.setProperty('--rot', `${angle}deg`);
-        }, i * 20);
+        }, i * 12);
       });
     }
 
-    function handleCardSelect(e) {
+    function selectCard(e) {
       const config = spreadConfigs[currentSpread];
-      if (selectedCards.length >= config.count) return;
+      if(selectedCards.length >= config.count) return;
       const target = e.currentTarget;
-      if (target.classList.contains('is-selected')) return;
+      if(target.classList.contains('is-selected')) return;
 
       const idx = selectedCards.length;
       const cardData = shuffledDeck[target.dataset.index];
-      const rev = Math.random() < 0.3;
-      selectedCards.push({ ...cardData, isReversed: rev });
+      selectedCards.push({ ...cardData, isReversed: Math.random() < 0.3 });
+      
       target.classList.add('is-selected');
+      const slots = document.querySelectorAll('.slot');
+      const slot = slots[idx];
+      
+      const sRect = slot.getBoundingClientRect();
+      const gRect = document.getElementById('card-grid').getBoundingClientRect();
+      
+      // grid의 transform-origin(center) 기준으로 슬롯의 중앙까지 이동할 거리 계산
+      const gridCenterX = gRect.left + gRect.width / 2;
+      const gridCenterY = gRect.bottom - 20; // spread-card의 bottom: 20px 기준
+      
+      const slotCenterX = sRect.left + sRect.width / 2;
+      const slotCenterY = sRect.top + sRect.height / 2;
 
-      const slot = document.querySelectorAll('#selected-slots .slot')[idx];
-      const gR = cardGrid.getBoundingClientRect(), sR = slot.getBoundingClientRect();
-      const finalTx = (sR.left + sR.width/2) - (gR.left + gR.width/2);
-      const finalTy = (sR.top + sR.height/2) - (gR.bottom - 20 - target.offsetHeight/2);
+      const finalTx = slotCenterX - gridCenterX;
+      const finalTy = slotCenterY - gridCenterY;
 
       target.style.setProperty('--tx', `${finalTx}px`);
       target.style.setProperty('--ty', `${finalTy}px`);
       target.style.setProperty('--rot', `${config.layout[idx].rot || 0}deg`);
+      target.style.setProperty('--sc', window.innerWidth > 768 ? 0.75 : 0.6);
       target.style.zIndex = 1000 + idx;
 
-      document.getElementById('selection-counter').textContent = `선택된 카드: ${selectedCards.length} / ${config.count}`;
-      if (selectedCards.length === config.count) setTimeout(goToResultState, 1200);
+      document.getElementById('selection-counter').textContent = `${selectedCards.length} / ${config.count} 선택됨`;
+      if(selectedCards.length === config.count) setTimeout(showResults, 1200);
     }
 
-    async function goToResultState() {
-      stateSpread.classList.add('hidden');
-      stateResult.classList.remove('hidden');
+    async function showResults() {
+      document.getElementById('state-spread').classList.add('hidden');
+      document.getElementById('state-result').classList.remove('hidden');
       const container = document.getElementById('result-container');
-      container.innerHTML = '';
-      container.className = selectedCards.length > 5 ? 'grid grid-cols-2 md:grid-cols-5 gap-4' : 'grid grid-cols-1 md:grid-cols-3 gap-6';
-
-      selectedCards.forEach((card, i) => {
-        const wrap = document.createElement('div');
-        wrap.className = 'bg-slate-800/50 p-4 rounded-2xl border border-indigo-500/20 text-center';
-        wrap.innerHTML = `<h3 class="text-indigo-300 font-bold text-xs mb-2">[${spreadConfigs[currentSpread].positions[i]}]</h3>
-          <div class="perspective-1000 mx-auto w-32 h-48 mb-3"><div class="card-inner relative w-full h-full transform-style-3d">
-            <div class="absolute w-full h-full backface-hidden bg-indigo-900 rounded-lg border-2 border-indigo-400 bg-cover bg-center" style="background-image:url('https://upload.wikimedia.org/wikipedia/commons/5/5c/Tarot_card_back_RWS.jpg')"></div>
-            <div class="absolute w-full h-full backface-hidden rotate-y-180 rounded-lg overflow-hidden border-2 border-indigo-300">
-              <img src="${card.image}" class="w-full h-full object-fill ${card.isReversed ? 'rotate-z-180' : ''}">
-            </div>
-          </div></div>
-          <h4 class="text-white font-bold text-sm mb-1">${card.name} ${card.isReversed ? '(역)' : '(정)'}</h4>
-          <p class="text-xs text-slate-300 leading-relaxed text-left opacity-0 transition-opacity duration-500"></p>`;
-        container.appendChild(wrap);
-      });
-
+      container.innerHTML = '<p class="text-center text-indigo-300 animate-pulse">타로 마스터가 카드의 기운을 읽고 있습니다...</p>';
+      
       try {
         const res = await fetch(WORKER_URL, {
           method: 'POST',
+          headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({
-            concern: userConcern, userInfo, 
+            concern: userConcern, userInfo,
             spreadName: spreadConfigs[currentSpread].name,
             positions: spreadConfigs[currentSpread].positions,
             cards: selectedCards.map(c => ({ name: c.name, isReversed: c.isReversed }))
           })
         });
         const data = await res.json();
-        const items = container.querySelectorAll('p');
-        for(let i=0; i<items.length; i++) {
-          const inner = container.querySelectorAll('.card-inner')[i];
-          inner.style.transform = 'rotateY(180deg)';
-          items[i].classList.remove('opacity-0');
-          items[i].textContent = data.readings[i];
-          await new Promise(r => setTimeout(r, 800));
+        
+        container.innerHTML = '';
+        container.className = selectedCards.length > 5 ? 'grid grid-cols-2 md:grid-cols-5 gap-4' : 'grid grid-cols-1 md:grid-cols-3 gap-6';
+        
+        selectedCards.forEach((card, i) => {
+          const wrap = document.createElement('div');
+          wrap.className = 'bg-slate-900/50 p-4 rounded-2xl border border-indigo-500/10 text-center';
+          wrap.innerHTML = `
+            <h3 class="text-indigo-400 font-bold text-xs mb-3">[${spreadConfigs[currentSpread].positions[i]}]</h3>
+            <div class="perspective-1000 mx-auto w-28 h-44 md:w-32 md:h-48 mb-4">
+              <div class="card-inner relative w-full h-full transform-style-3d transition-transform duration-1000">
+                <div class="absolute w-full h-full backface-hidden bg-indigo-950 rounded-lg border border-indigo-500/30 bg-cover bg-center" style="background-image:url('https://upload.wikimedia.org/wikipedia/commons/5/5c/Tarot_card_back_RWS.jpg')"></div>
+                <div class="absolute w-full h-full backface-hidden rotate-y-180 rounded-lg overflow-hidden border-2 border-indigo-400">
+                  <img src="${card.image}" class="w-full h-full object-fill ${card.isReversed ? 'rotate-z-180' : ''}">
+                </div>
+              </div>
+            </div>
+            <h4 class="text-white font-bold text-xs mb-2">${card.name} ${card.isReversed ? '(역방향)' : '(정방향)'}</h4>
+            <p class="text-[11px] text-slate-400 leading-relaxed text-left line-clamp-6" id="read-${i}"></p>
+          `;
+          container.appendChild(wrap);
+        });
+
+        // 순차적 카드 공개
+        for(let i=0; i<selectedCards.length; i++) {
+          await new Promise(r => setTimeout(r, 600));
+          container.querySelectorAll('.card-inner')[i].style.transform = 'rotateY(180deg)';
+          document.getElementById(`read-${i}`).textContent = data.readings[i];
         }
+
         const advice = document.createElement('div');
-        advice.className = 'col-span-full mt-8 p-6 bg-indigo-900/40 rounded-3xl border border-indigo-500/30 text-center';
-        advice.innerHTML = `<h4 class="text-indigo-200 font-bold mb-2">마스터의 조언</h4><p class="text-sm text-slate-200">${data.conclusion}</p>`;
+        advice.className = 'col-span-full mt-10 p-6 bg-indigo-950/30 rounded-3xl border border-indigo-500/20 text-center';
+        advice.innerHTML = `<h4 class="text-indigo-300 font-bold mb-3">마스터의 총평</h4><p class="text-sm text-slate-200 leading-relaxed">${data.conclusion}</p>`;
         container.appendChild(advice);
-      } catch(e) { console.error(e); }
+
+      } catch(e) {
+        container.innerHTML = '<p class="text-center text-red-400">오류가 발생했습니다. 다시 시도해 주세요.</p>';
+      }
     }
 
     document.getElementById('btn-restart').addEventListener('click', () => location.reload());
