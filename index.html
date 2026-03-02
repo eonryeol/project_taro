@@ -32,21 +32,21 @@
       position: absolute;
       left: 50%;
       bottom: 50px;
-      transform-origin: bottom center;
+      transform-origin: center center;
       transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       z-index: 1;
     }
 
     .spread-card.dealt:hover {
       z-index: 100 !important;
-      transform: translateX(-50%) rotate(var(--rot)) translateY(-40px) scale(1.15) !important;
+      transform: translateX(-50%) translateY(var(--ty)) translateX(var(--tx)) rotate(var(--rot)) scale(1.1) !important;
       filter: brightness(1.2) drop-shadow(0 0 20px rgba(129, 140, 248, 0.8));
       border-color: #818cf8;
     }
 
     #card-grid {
       position: relative;
-      height: 400px;
+      height: 500px;
       margin-top: 20px;
       perspective: 1500px;
       width: 100%;
@@ -456,17 +456,19 @@
       const slotRect = targetSlot.getBoundingClientRect();
       
       // 현재 적용된 transform을 고려한 상대적 이동 계산
+      // (슬롯의 중앙) - (카드의 중앙)
       const deltaX = (slotRect.left + slotRect.width / 2) - (cardRect.left + cardRect.width / 2);
       const deltaY = (slotRect.top + slotRect.height / 2) - (cardRect.top + cardRect.height / 2);
       
-      // 기존 transform 값에 델타값을 더함
+      // 기존 transform 값 (translateX(-50%) + var(--tx/ty))
       const currentTx = parseFloat(target.dataset.tx) || 0;
       const currentTy = parseFloat(target.dataset.ty) || 0;
       
       const finalTx = currentTx + deltaX;
       const finalTy = currentTy + deltaY;
       
-      target.style.transform = `translateX(calc(-50% + ${finalTx}px)) translateY(${finalTy}px) rotate(0deg) scale(1.1)`;
+      // translateX(-50%)가 CSS에 있으므로, deltaX만큼을 더해줌
+      target.style.transform = `translateX(calc(-50% + ${finalTx}px)) translateY(${finalTy}px) rotate(0deg) scale(1.05)`;
       target.style.zIndex = 1000 + currentSelectionIndex;
 
       updateCounter();
