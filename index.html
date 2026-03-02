@@ -162,6 +162,24 @@
                   <div class="w-3 h-3 rounded-full bg-indigo-400 transition-opacity duration-300 opacity-0"></div>
                 </div>
               </div>
+              <div class="spread-type-card flex flex-row items-center justify-between p-4 bg-slate-800 border-2 border-indigo-900/50 rounded-2xl cursor-pointer transition-all hover:bg-slate-700" data-spread="horseshoe">
+                <div class="flex flex-col text-left">
+                  <span class="text-lg font-bold text-indigo-200">말발굽</span>
+                  <span class="text-xs text-slate-400 mt-1">과거~미래 흐름과 조언 (7장)</span>
+                </div>
+                <div class="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio">
+                  <div class="w-3 h-3 rounded-full bg-indigo-400 transition-opacity duration-300 opacity-0"></div>
+                </div>
+              </div>
+              <div class="spread-type-card flex flex-row items-center justify-between p-4 bg-slate-800 border-2 border-indigo-900/50 rounded-2xl cursor-pointer transition-all hover:bg-slate-700" data-spread="fullmoon">
+                <div class="flex flex-col text-left">
+                  <span class="text-lg font-bold text-indigo-200">보름달</span>
+                  <span class="text-xs text-slate-400 mt-1">에너지 상태와 목표 성찰 (7장)</span>
+                </div>
+                <div class="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio">
+                  <div class="w-3 h-3 rounded-full bg-indigo-400 transition-opacity duration-300 opacity-0"></div>
+                </div>
+              </div>
               <div class="spread-type-card flex flex-row items-center justify-between p-4 bg-slate-800 border-2 border-indigo-900/50 rounded-2xl cursor-pointer transition-all hover:bg-slate-700" data-spread="tree">
                 <div class="flex flex-col text-left">
                   <span class="text-lg font-bold text-indigo-200">생명의 나무</span>
@@ -378,29 +396,57 @@
         name: "원 카드",
         count: 1,
         positions: ["해답"],
-        layout: [{ x: 0, y: 0 }] // 중앙
+        layout: [{ x: 0, y: -80 }] 
       },
       three: {
         name: "쓰리 카드",
         count: 3,
         positions: ["과거", "현재", "미래"],
-        layout: [{ x: -120, y: 0 }, { x: 0, y: 0 }, { x: 120, y: 0 }]
+        layout: [{ x: -140, y: -80 }, { x: 0, y: -80 }, { x: 140, y: -80 }]
+      },
+      horseshoe: {
+        name: "말발굽",
+        count: 7,
+        positions: ["과거", "현재", "가까운 미래", "조언/대책", "주변 환경", "장애물", "최종 결과"],
+        layout: [
+          { x: -210, y: 20 },   // 과거
+          { x: -140, y: -80 },  // 현재
+          { x: -70, y: -160 },  // 가까운 미래
+          { x: 0, y: -200 },    // 조언
+          { x: 70, y: -160 },   // 주변
+          { x: 140, y: -80 },   // 장애물
+          { x: 210, y: 20 }     // 결과
+        ]
+      },
+      fullmoon: {
+        name: "보름달",
+        count: 7,
+        positions: ["현재의 삶", "인간관계", "방해 요소", "장애물 극복", "내가 할 일", "외부의 도움", "예상 결과"],
+        layout: [
+          { x: 0, y: 0 },       // 1 (중앙)
+          { x: -150, y: -50 },  // 2 (좌중)
+          { x: 150, y: -50 },   // 3 (우중)
+          { x: -100, y: -180 }, // 4 (좌상)
+          { x: 100, y: -180 },  // 5 (우상)
+          { x: 0, y: -250 },    // 6 (최상)
+          { x: 0, y: 120 }      // 7 (하단)
+        ]
       },
       celtic: {
         name: "켈틱 크로스",
         count: 10,
         positions: ["현재 상황", "장애물/도움", "무의식/기반", "과거", "의식/목표", "가까운 미래", "당신의 태도", "주변 환경", "희망과 공포", "최종 결과"],
         layout: [
-          { x: -100, y: 0 },    // 1. 현재
-          { x: -100, y: 0, rot: 90 }, // 2. 장애 (겹쳐서 가로로)
-          { x: -100, y: 150 },  // 3. 기반 (아래)
-          { x: -250, y: 0 },    // 4. 과거 (왼쪽)
-          { x: -100, y: -150 }, // 5. 목표 (위)
-          { x: 50, y: 0 },      // 6. 미래 (오른쪽)
-          { x: 220, y: 180 },   // 7. 태도 (수직라인 하단)
-          { x: 220, y: 60 },    // 8. 환경
-          { x: 220, y: -60 },   // 9. 희망/공포
-          { x: 220, y: -180 }   // 10. 결과 (수직라인 상단)
+          { x: -120, y: -50 },    // 1. 현재
+          { x: -120, y: -50, rot: 90 }, // 2. 장애
+          { x: -120, y: 80 },     // 3. 기반
+          { x: -260, y: -50 },    // 4. 과거
+          { x: -120, y: -180 },   // 5. 목표
+          { x: 20, y: -50 },      // 6. 미래
+          { x: 180, y: 130 },     // 7. 태도
+          { x: 180, y: 30 },      // 8. 환경
+          { x: 180, y: -70 },     // 9. 희망/공포
+          { x: 180, y: -170 }     // 10. 결과
         ]
       },
       tree: {
@@ -408,16 +454,16 @@
         count: 10,
         positions: ["Kether(영성)", "Chokmah(지혜)", "Binah(이해)", "Chesed(자비)", "Geburah(힘)", "Tiphareth(미다움)", "Netzach(승리)", "Hod(영광)", "Yesod(기초)", "Malkuth(왕국)"],
         layout: [
-          { x: 0, y: -220 },   // 1 (중앙 상단)
-          { x: 120, y: -150 }, // 2 (우측 상단)
-          { x: -120, y: -150 },// 3 (좌측 상단)
-          { x: 120, y: -30 },  // 4 (우측 중단)
-          { x: -120, y: -30 }, // 5 (좌측 중단)
-          { x: 0, y: 20 },     // 6 (중앙)
-          { x: 120, y: 100 },  // 7 (우측 하단)
-          { x: -120, y: 100 }, // 8 (좌측 하단)
-          { x: 0, y: 160 },    // 9 (중앙 하단 위)
-          { x: 0, y: 260 }     // 10 (최하단)
+          { x: 0, y: -280 },   // 1
+          { x: 110, y: -220 }, // 2
+          { x: -110, y: -220 },// 3
+          { x: 110, y: -110 }, // 4
+          { x: -110, y: -110 },// 5
+          { x: 0, y: -50 },    // 6
+          { x: 110, y: 60 },   // 7
+          { x: -110, y: 60 },  // 8
+          { x: 0, y: 130 },    // 9
+          { x: 0, y: 240 }     // 10
         ]
       }
     };
