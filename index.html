@@ -132,24 +132,44 @@
           </div>
 
           <!-- 배열법 선택 -->
-          <div class="flex flex-col gap-2 text-left">
+          <div class="flex flex-col gap-2 text-left w-full">
             <label class="text-indigo-300 text-sm font-semibold ml-1">배열법 선택</label>
-            <div id="spread-selector" class="grid grid-cols-2 gap-3 h-full">
+            <div id="spread-selector" class="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
               <div class="spread-type-card active" data-spread="one">
-                <span class="text-lg font-bold text-indigo-200">원 카드</span>
-                <span class="text-[10px] text-slate-400 mt-1">심플하고 명확한 해답 (1장)</span>
+                <div class="flex items-center justify-between w-full mb-2">
+                  <span class="text-lg font-bold text-indigo-200">원 카드</span>
+                  <div class="w-5 h-5 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio">
+                    <div class="w-2.5 h-2.5 rounded-full bg-indigo-400 opacity-100"></div>
+                  </div>
+                </div>
+                <span class="text-[10px] text-slate-400 text-left w-full">심플하고 명확한 해답 (1장)</span>
               </div>
               <div class="spread-type-card" data-spread="three">
-                <span class="text-lg font-bold text-indigo-200">쓰리 카드</span>
-                <span class="text-[10px] text-slate-400 mt-1">과거, 현재, 미래 분석 (3장)</span>
+                <div class="flex items-center justify-between w-full mb-2">
+                  <span class="text-lg font-bold text-indigo-200">쓰리 카드</span>
+                  <div class="w-5 h-5 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio">
+                    <div class="w-2.5 h-2.5 rounded-full bg-indigo-400 opacity-0"></div>
+                  </div>
+                </div>
+                <span class="text-[10px] text-slate-400 text-left w-full">과거, 현재, 미래 분석 (3장)</span>
               </div>
               <div class="spread-type-card" data-spread="celtic">
-                <span class="text-lg font-bold text-indigo-200">켈틱 크로스</span>
-                <span class="text-[10px] text-slate-400 mt-1">문제의 심층적 진단 (10장)</span>
+                <div class="flex items-center justify-between w-full mb-2">
+                  <span class="text-lg font-bold text-indigo-200">켈틱 크로스</span>
+                  <div class="w-5 h-5 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio">
+                    <div class="w-2.5 h-2.5 rounded-full bg-indigo-400 opacity-0"></div>
+                  </div>
+                </div>
+                <span class="text-[10px] text-slate-400 text-left w-full">문제의 심층적 진단 (10장)</span>
               </div>
               <div class="spread-type-card" data-spread="tree">
-                <span class="text-lg font-bold text-indigo-200">생명의 나무</span>
-                <span class="text-[10px] text-slate-400 mt-1">내외부 상황의 총체적 관망 (10장)</span>
+                <div class="flex items-center justify-between w-full mb-2">
+                  <span class="text-lg font-bold text-indigo-200">생명의 나무</span>
+                  <div class="w-5 h-5 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio">
+                    <div class="w-2.5 h-2.5 rounded-full bg-indigo-400 opacity-0"></div>
+                  </div>
+                </div>
+                <span class="text-[10px] text-slate-400 text-left w-full">내외부 상황의 총체적 관망 (10장)</span>
               </div>
             </div>
           </div>
@@ -427,11 +447,21 @@
     spreadSelector.addEventListener('click', (e) => {
       const card = e.target.closest('.spread-type-card');
       if (!card) return;
-      
-      document.querySelectorAll('.spread-type-card').forEach(c => c.classList.remove('active'));
+
+      document.querySelectorAll('.spread-type-card').forEach(c => {
+        c.classList.remove('active');
+        // 내부 라디오 버튼 초기화
+        const dot = c.querySelector('.spread-radio div');
+        if (dot) dot.style.opacity = '0';
+      });
+
       card.classList.add('active');
+      const activeDot = card.querySelector('.spread-radio div');
+      if (activeDot) activeDot.style.opacity = '1';
+
       currentSpread = card.dataset.spread;
     });
+    stories: [
 
     // [3. 핵심 자바스크립트 로직]
     // Fisher-Yates 셔플 알고리즘
