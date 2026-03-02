@@ -7,7 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&display=swap');
-    body { font-family: 'Noto Serif KR', serif; background: #020617; color: #e2e8f0; overflow: hidden; height: 100vh; }
+    body { font-family: 'Noto Serif KR', serif; background: #020617; color: #e2e8f0; overflow: hidden; height: 100vh; touch-action: none; }
     
     .perspective-1000 { perspective: 1000px; }
     .transform-style-3d { transform-style: preserve-3d; }
@@ -15,44 +15,45 @@
     .rotate-y-180 { transform: rotateY(180deg); }
     .rotate-z-180 { transform: rotateZ(180deg); }
 
-    /* 펼쳐진 카드 스타일 - JS 변수를 반드시 반영해야 함 */
+    /* 펼쳐진 카드 스타일 - 크기를 슬롯과 동일하게 고정하여 애니메이션 일치화 */
     .spread-card {
       position: absolute;
       left: 50%;
-      bottom: 30px; 
+      bottom: 0px; 
       transform-origin: center center;
-      transition: all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
       z-index: 10;
-      /* 핵심: var(--tx) 등을 사용하여 JS에서 계산된 위치로 이동 */
+      width: 60px; height: 96px; /* 모바일 크기 고정 */
       transform: translateX(calc(-50% + var(--tx, 0px))) translateY(var(--ty, 0px)) rotate(var(--rot, 0deg)) scale(1);
+    }
+    @media (min-width: 768px) {
+      .spread-card { width: 85px; height: 136px; } /* PC 크기 고정 */
     }
 
     .spread-card.dealt:not(.is-selected):hover {
       z-index: 100 !important;
-      transform: translateX(calc(-50% + var(--tx, 0px))) translateY(calc(var(--ty, 0px) - 50px)) rotate(var(--rot, 0deg)) scale(1.35) !important;
-      filter: brightness(1.3) drop-shadow(0 0 25px rgba(99, 102, 241, 0.9));
+      transform: translateX(calc(-50% + var(--tx, 0px))) translateY(calc(var(--ty, 0px) - 20px)) rotate(var(--rot, 0deg)) scale(1.1) !important;
+      filter: brightness(1.3) drop-shadow(0 0 20px rgba(99, 102, 241, 0.8));
       cursor: pointer;
     }
 
-    /* 선택된 카드의 축소 및 배치 스타일 */
+    /* 선택된 카드의 배치 스타일 */
     .spread-card.is-selected {
       z-index: 500 !important;
       pointer-events: none;
-      filter: drop-shadow(0 0 20px rgba(129, 140, 248, 0.6));
-      /* 선택되면 작아지면서 슬롯으로 이동 */
-      transform: translateX(calc(-50% + var(--tx, 0px))) translateY(var(--ty, 0px)) rotate(var(--rot, 0deg)) scale(var(--sc, 0.65)) !important;
+      filter: drop-shadow(0 0 15px rgba(129, 140, 248, 0.6));
+      transform: translateX(calc(-50% + var(--tx, 0px))) translateY(var(--ty, 0px)) rotate(var(--rot, 0deg)) scale(var(--sc, 1)) !important;
     }
 
     /* 슬롯 스타일 */
     .slot {
-      @apply border border-indigo-500/20 rounded-lg flex items-center justify-center absolute transition-all duration-700;
-      background: rgba(30, 41, 59, 0.4);
+      @apply border-2 border-dashed border-indigo-500/30 rounded-lg flex items-center justify-center absolute transition-all duration-700 bg-indigo-900/10;
       width: 60px; height: 96px;
     }
     @media (min-width: 768px) { .slot { width: 85px; height: 136px; } }
 
     .slot-label {
-      @apply text-[9px] md:text-[11px] text-indigo-300/70 font-medium absolute -bottom-5 w-max whitespace-nowrap bg-black/40 px-1 rounded;
+      @apply text-[9px] md:text-[11px] text-indigo-200 font-bold absolute -bottom-6 w-max whitespace-nowrap bg-indigo-950/80 px-2 py-0.5 rounded border border-indigo-500/30 shadow-md;
     }
 
     /* 배열법 선택 카드 - 클릭 영역 확보 */
@@ -61,7 +62,32 @@
     }
     .spread-type-card.active { @apply border-indigo-500 bg-indigo-950/30 ring-1 ring-indigo-500; }
 
+    /* 점술사 고양이 마스터 애니메이션 */
+    .tarot-master-container {
+      position: absolute;
+      top: 45%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 0;
+      opacity: 0.6;
+      pointer-events: none;
+      text-align: center;
+    }
+
+    .tarot-master-img {
+      width: 280px;
+      height: auto;
+      filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.4));
+      animation: master-float 4s ease-in-out infinite;
+    }
+
+    @keyframes master-float {
+      0%, 100% { transform: translateY(0); filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.4)); }
+      50% { transform: translateY(-20px); filter: drop-shadow(0 0 40px rgba(129, 140, 248, 0.7)); }
+    }
+
     /* 레이아웃 */
+
     #app-container { height: 100vh; display: flex; flex-direction: column; }
     .state-section { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; width: 100%; max-width: 1200px; margin: 0 auto; overflow: hidden; }
   </style>
@@ -70,7 +96,6 @@
 
   <main id="app-container">
     
-    <!-- START STATE -->
     <section id="state-start" class="state-section">
       <h1 class="text-3xl md:text-5xl font-bold mb-2 tracking-tighter text-indigo-400">TAROT MASTER AI</h1>
       <p class="text-slate-400 text-sm mb-6">당신의 질문에 대한 영적인 답을 찾으세요.</p>
@@ -125,28 +150,26 @@
       </button>
     </section>
 
-    <!-- SPREAD STATE -->
-    <section id="state-spread" class="state-section hidden relative">
-      <div class="absolute top-4 w-full text-center z-[1000]">
-        <h2 id="selection-guide" class="text-xl font-bold text-indigo-300">카드를 선택하세요</h2>
-        <p id="selection-counter" class="text-slate-500 text-xs mt-1">0 / 0 선택됨</p>
+    <section id="state-spread" class="state-section hidden relative p-0 max-w-none">
+      <div class="absolute top-6 w-full text-center z-[1000]">
+        <h2 id="selection-guide" class="text-lg md:text-xl font-bold text-indigo-300 drop-shadow-md">카드를 선택하세요</h2>
+        <p id="selection-counter" class="text-indigo-200/70 text-xs mt-1 bg-black/40 inline-block px-3 py-1 rounded-full border border-indigo-500/30">0 / 0 선택됨</p>
       </div>
       
-      <div id="unified-container" class="relative w-full h-full flex flex-col items-center justify-end pb-10">
-        <!-- 선택된 카드들이 안착할 슬롯 영역 -->
-        <div id="selected-slots" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60%] w-full h-[300px]"></div>
-        <!-- 펼쳐진 카드 덱 영역 -->
-        <div id="card-grid" class="relative w-full h-32 md:h-40"></div>
+      <div id="unified-container" class="relative w-full h-full flex flex-col pt-24 pb-8 md:pb-12">
+        <div id="slots-area" class="relative flex-1 w-full min-h-[250px]">
+          <div id="selected-slots" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none"></div>
+        </div>
+        <div id="card-grid" class="relative w-full h-[120px] md:h-[160px] shrink-0 mt-4"></div>
       </div>
     </section>
 
-    <!-- RESULT STATE -->
-    <section id="state-result" class="state-section hidden overflow-y-auto">
+    <section id="state-result" class="state-section hidden overflow-y-auto !justify-start">
       <div class="w-full max-w-5xl py-8">
         <h2 id="result-title" class="text-2xl font-bold mb-8 text-center text-indigo-300">타로 리딩 결과</h2>
         <div id="result-container" class="grid gap-6"></div>
         <div class="mt-12 text-center pb-10">
-          <button id="btn-restart" class="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-full font-bold transition-all">처음으로</button>
+          <button id="btn-restart" class="px-8 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white rounded-full font-bold transition-all shadow-lg active:scale-95">다시 질문하기</button>
         </div>
       </div>
     </section>
@@ -183,18 +206,18 @@
 
     const spreadConfigs = {
       one: { name: "원 카드", count: 1, positions: ["핵심 조언"], layout: [{ x: 0, y: 0 }] },
-      three: { name: "쓰리 카드", count: 3, positions: ["과거", "현재", "미래"], layout: [{ x: -100, y: 0 }, { x: 0, y: 0 }, { x: 100, y: 0 }] },
+      three: { name: "쓰리 카드", count: 3, positions: ["과거", "현재", "미래"], layout: [{ x: -110, y: 0 }, { x: 0, y: 0 }, { x: 110, y: 0 }] },
       horseshoe: {
         name: "말발굽", count: 7, 
         positions: ["과거", "현재", "미래", "조언", "환경", "방해", "결과"],
-        layout: [{x:-180, y:80}, {x:-120, y:0}, {x:-60, y:-60}, {x:0, y:-80}, {x:60, y:-60}, {x:120, y:0}, {x:180, y:80}]
+        layout: [{x:-180, y:90}, {x:-120, y:10}, {x:-60, y:-50}, {x:0, y:-70}, {x:60, y:-50}, {x:120, y:10}, {x:180, y:90}]
       },
       celtic: {
         name: "켈틱 크로스", count: 10,
         positions: ["현재", "장애", "기반", "과거", "목표", "미래", "태도", "환경", "공포", "결과"],
         layout: [
-          {x:-100, y:0}, {x:-100, y:0, rot:90}, {x:-100, y:100}, {x:-220, y:0}, {x:-100, y:-100}, {x:20, y:0},
-          {x:160, y:150}, {x:160, y:50}, {x:160, y:-50}, {x:160, y:-150}
+          {x:-110, y:0}, {x:-110, y:0, rot:90}, {x:-110, y:110}, {x:-230, y:0}, {x:-110, y:-110}, {x:20, y:0},
+          {x:170, y:160}, {x:170, y:55}, {x:170, y:-50}, {x:170, y:-155}
         ]
       }
     };
@@ -214,7 +237,7 @@
       for(let i=1; i<=31; i++) day.add(new Option(i+'일', i));
     })();
 
-    // 2. 배열법 선택 로직 복구
+    // 2. 배열법 선택 이벤트
     document.getElementById('spread-selector').addEventListener('click', (e) => {
       const card = e.target.closest('.spread-type-card');
       if(!card) return;
@@ -247,21 +270,29 @@
 
     function setupSpread() {
       const config = spreadConfigs[currentSpread];
-      document.getElementById('selection-guide').textContent = `${config.name}: 카드를 ${config.count}장 선택해 주세요`;
+      document.getElementById('selection-guide').textContent = `[${config.name}] 카드를 ${config.count}장 뽑아주세요`;
       document.getElementById('selection-counter').textContent = `0 / ${config.count} 선택됨`;
       
+      const isMobile = window.innerWidth <= 768;
+      // 핵심 1: 모바일에서는 배열법 레이아웃 간격을 줄여 화면 밖으로 나가지 않게 조절
+      const scaleFactor = isMobile ? 0.6 : 1; 
+
       // 슬롯 배치
       const slotsDiv = document.getElementById('selected-slots');
       slotsDiv.innerHTML = '';
       config.layout.forEach((pos, i) => {
         const slot = document.createElement('div');
         slot.className = 'slot';
-        slot.style.left = `calc(50% + ${pos.x}px)`;
-        slot.style.top = `calc(50% + ${pos.y}px)`;
+        slot.style.left = `calc(50% + ${pos.x * scaleFactor}px)`;
+        slot.style.top = `calc(50% + ${pos.y * scaleFactor}px)`;
         slot.style.transform = `translate(-50%, -50%) ${pos.rot ? `rotate(${pos.rot}deg)` : ''}`;
         
         const label = document.createElement('span');
         label.className = 'slot-label'; label.textContent = config.positions[i];
+        
+        // 회전된 카드(장애물 카드 등)의 라벨을 정방향으로 보정
+        if(pos.rot) label.style.transform = `rotate(-${pos.rot}deg)`;
+        
         slot.appendChild(label);
         slotsDiv.appendChild(slot);
       });
@@ -270,25 +301,29 @@
       const grid = document.getElementById('card-grid');
       grid.innerHTML = '';
       const total = shuffledDeck.length;
-      const radius = window.innerWidth > 768 ? 600 : 350; // 곡률
-      const angleRange = 140; // 펼쳐질 각도 범위
-      const angleStep = angleRange / (total - 1);
+      
+      // 핵심 2: 기기 너비에 맞춰 부채꼴이 펼쳐지는 최대 너비 동적 계산
+      const cardWidth = isMobile ? 60 : 85;
+      const screenPadding = isMobile ? 20 : 60;
+      const maxFanWidth = Math.min(window.innerWidth - (screenPadding * 2), 900) - cardWidth;
+      
+      const maxCurve = isMobile ? 35 : 55; // 곡선으로 떨어지는 최대 깊이
+      const maxRotation = isMobile ? 45 : 60; // 좌우 끝 카드의 회전각
 
       shuffledDeck.forEach((card, i) => {
         const el = document.createElement('div');
-        el.className = 'spread-card w-12 h-20 md:w-16 md:h-28 bg-indigo-950 rounded-lg border border-indigo-400/30 shadow-xl bg-cover bg-center opacity-0';
+        el.className = 'spread-card bg-indigo-950 rounded-lg border-2 border-indigo-400/40 shadow-xl bg-cover bg-center opacity-0';
         el.style.backgroundImage = 'url("https://upload.wikimedia.org/wikipedia/commons/5/5c/Tarot_card_back_RWS.jpg")';
         
-        const angle = -(angleRange/2) + (i * angleStep);
-        const rad = angle * (Math.PI / 180);
+        const normalized = (i / (total - 1)) * 2 - 1; // -1 (왼쪽 끝) ~ 1 (오른쪽 끝)
         
-        // 부채꼴 좌표 계산
-        const tx = Math.sin(rad) * radius;
-        const ty = (1 - Math.cos(rad)) * radius; 
+        const tx = normalized * (maxFanWidth / 2);
+        const ty = Math.abs(normalized * normalized) * maxCurve; // 중앙이 가장 높고 가장자리가 낮아지는 포물선 
+        const rot = normalized * (maxRotation / 2);
         
         el.style.setProperty('--tx', `${tx}px`);
         el.style.setProperty('--ty', `${ty}px`);
-        el.style.setProperty('--rot', `${angle}deg`);
+        el.style.setProperty('--rot', `${rot}deg`);
         
         el.dataset.index = i;
         el.addEventListener('click', selectCard);
@@ -297,7 +332,7 @@
         setTimeout(() => {
           el.classList.add('dealt');
           el.style.opacity = '1';
-        }, i * 15);
+        }, i * 20); // 애니메이션 딜레이
       });
     }
 
@@ -311,29 +346,40 @@
       selectedCards.push({ ...shuffledDeck[target.dataset.index], isReversed: Math.random() < 0.3 });
       
       target.classList.add('is-selected');
-      const slot = document.querySelectorAll('.slot')[idx];
-      const sRect = slot.getBoundingClientRect();
-      const gRect = document.getElementById('card-grid').getBoundingClientRect();
       
-      // 슬롯으로의 상대 이동 좌표 계산
-      const finalTx = (sRect.left + sRect.width/2) - (gRect.left + gRect.width/2);
-      const finalTy = (sRect.top + sRect.height/2) - (gRect.bottom - 30); 
+      // 핵심 3: 정확한 애니메이션 이동을 위한 절대 좌표 계산
+      const slot = document.querySelectorAll('.slot')[idx];
+      const slotRect = slot.getBoundingClientRect();
+      const gridRect = document.getElementById('card-grid').getBoundingClientRect();
+      
+      // 슬롯의 화면 상 정중앙 좌표
+      const targetX = slotRect.left + slotRect.width / 2;
+      const targetY = slotRect.top + slotRect.height / 2;
+
+      // 카드가 생성된 기준점 (bottom: 0, left: 50% 지점의 화면 좌표)
+      const originX = gridRect.left + gridRect.width / 2;
+      const cardHeight = window.innerWidth <= 768 ? 96 : 136;
+      const originY = gridRect.bottom - (cardHeight / 2);
+
+      // 목표점과 기준점의 거리 차이 계산
+      const finalTx = targetX - originX;
+      const finalTy = targetY - originY;
 
       target.style.setProperty('--tx', `${finalTx}px`);
       target.style.setProperty('--ty', `${finalTy}px`);
       target.style.setProperty('--rot', `${config.layout[idx].rot || 0}deg`);
-      target.style.setProperty('--sc', window.innerWidth > 768 ? 0.75 : 0.6);
+      target.style.setProperty('--sc', `1`); // 슬롯과 카드 사이즈를 1:1로 맞췄으므로 스케일은 1로 고정
       target.style.zIndex = 1000 + idx;
 
       document.getElementById('selection-counter').textContent = `${selectedCards.length} / ${config.count} 선택됨`;
-      if(selectedCards.length === config.count) setTimeout(showResults, 1000);
+      if(selectedCards.length === config.count) setTimeout(showResults, 1200);
     }
 
     async function showResults() {
       document.getElementById('state-spread').classList.add('hidden');
       document.getElementById('state-result').classList.remove('hidden');
       const container = document.getElementById('result-container');
-      container.innerHTML = '<p class="text-center text-indigo-300 animate-pulse">마스터가 리딩을 준비 중입니다...</p>';
+      container.innerHTML = '<div class="col-span-full py-20 text-center"><p class="text-indigo-300 animate-pulse text-lg">마스터가 우주의 기운을 모아 리딩 중입니다...</p></div>';
       
       try {
         const res = await fetch(WORKER_URL, {
@@ -349,40 +395,42 @@
         const data = await res.json();
         
         container.innerHTML = '';
-        container.className = selectedCards.length > 5 ? 'grid grid-cols-2 md:grid-cols-5 gap-4' : 'grid grid-cols-1 md:grid-cols-3 gap-6';
+        container.className = selectedCards.length > 5 ? 'grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4' : 'grid grid-cols-1 md:grid-cols-3 gap-6';
         
         selectedCards.forEach((card, i) => {
           const wrap = document.createElement('div');
-          wrap.className = 'bg-slate-900/50 p-4 rounded-xl border border-indigo-500/10 text-center';
+          wrap.className = 'bg-slate-900/50 p-4 rounded-xl border border-indigo-500/20 text-center flex flex-col items-center';
           wrap.innerHTML = `
-            <h3 class="text-indigo-400 font-bold text-[10px] mb-2">[${spreadConfigs[currentSpread].positions[i]}]</h3>
-            <div class="perspective-1000 mx-auto w-24 h-36 md:w-32 md:h-48 mb-3">
+            <h3 class="text-indigo-300 font-bold text-xs mb-3 bg-indigo-950/50 px-3 py-1 rounded-full whitespace-nowrap">${spreadConfigs[currentSpread].positions[i]}</h3>
+            <div class="perspective-1000 w-20 h-32 md:w-28 md:h-44 mb-4">
               <div class="card-inner relative w-full h-full transform-style-3d transition-transform duration-1000">
-                <div class="absolute w-full h-full backface-hidden bg-indigo-950 rounded-lg border border-indigo-500/30 bg-cover bg-center" style="background-image:url('https://upload.wikimedia.org/wikipedia/commons/5/5c/Tarot_card_back_RWS.jpg')"></div>
-                <div class="absolute w-full h-full backface-hidden rotate-y-180 rounded-lg overflow-hidden border-2 border-indigo-400">
+                <div class="absolute w-full h-full backface-hidden bg-indigo-950 rounded-lg border border-indigo-500/30 bg-cover bg-center shadow-lg" style="background-image:url('https://upload.wikimedia.org/wikipedia/commons/5/5c/Tarot_card_back_RWS.jpg')"></div>
+                <div class="absolute w-full h-full backface-hidden rotate-y-180 rounded-lg overflow-hidden border-2 border-indigo-400 shadow-[0_0_15px_rgba(129,140,248,0.5)]">
                   <img src="${card.image}" class="w-full h-full object-fill ${card.isReversed ? 'rotate-z-180' : ''}">
                 </div>
               </div>
             </div>
-            <h4 class="text-white font-bold text-[11px] mb-1">${card.name}</h4>
-            <p class="text-[10px] text-slate-400 leading-tight text-left" id="read-${i}"></p>
+            <h4 class="text-indigo-100 font-bold text-xs mb-1">${card.name} ${card.isReversed ? '<span class="text-red-400 text-[10px]">(역방향)</span>' : ''}</h4>
+            <p class="text-[11px] text-slate-400 leading-relaxed text-left w-full mt-2 break-keep" id="read-${i}"></p>
           `;
           container.appendChild(wrap);
         });
 
+        // 카드 뒤집기 애니메이션 & 개별 해석 출력 적용
         for(let i=0; i<selectedCards.length; i++) {
-          await new Promise(r => setTimeout(r, 500));
+          await new Promise(r => setTimeout(r, 400));
           container.querySelectorAll('.card-inner')[i].style.transform = 'rotateY(180deg)';
           document.getElementById(`read-${i}`).textContent = data.readings[i];
         }
 
+        // 총평 추가
         const advice = document.createElement('div');
-        advice.className = 'col-span-full mt-8 p-6 bg-indigo-950/30 rounded-2xl border border-indigo-500/20 text-center';
-        advice.innerHTML = `<h4 class="text-indigo-300 font-bold mb-2">총평</h4><p class="text-xs text-slate-200 leading-relaxed">${data.conclusion}</p>`;
+        advice.className = 'col-span-full mt-6 p-6 md:p-8 bg-gradient-to-br from-indigo-950/80 to-slate-900/80 rounded-2xl border border-indigo-500/40 text-center shadow-xl';
+        advice.innerHTML = `<h4 class="text-indigo-200 font-bold text-lg mb-3">마스터의 조언</h4><p class="text-sm md:text-base text-slate-200 leading-loose break-keep">${data.conclusion}</p>`;
         container.appendChild(advice);
 
       } catch(e) {
-        container.innerHTML = '<p class="text-center text-red-400">오류가 발생했습니다.</p>';
+        container.innerHTML = '<div class="col-span-full py-10 text-center"><p class="text-red-400">서버와 통신 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.</p></div>';
       }
     }
 
