@@ -456,21 +456,25 @@
       
       // 카드가 left: 50% 이므로 기준점은 grid의 가로 중앙
       const gridCenterX = gridRect.left + gridRect.width / 2;
+      
       // 카드가 bottom: 60px 이므로 기준점은 grid의 바닥에서 60px 위
-      const gridBaseY = gridRect.bottom - 60;
+      // transform-origin이 center center이므로, ty=0일 때 카드의 중심 Y좌표는 다음과 같음
+      const cardHalfHeight = target.offsetHeight / 2;
+      const gridCenterY = gridRect.bottom - 60 - cardHalfHeight;
       
       // 슬롯의 중앙 좌표
       const slotCenterX = slotRect.left + slotRect.width / 2;
       const slotCenterY = slotRect.top + slotRect.height / 2;
       
-      // 최종 이동 좌표 계산 (CSS transform의 origin이 중앙이므로 슬롯 중앙에 맞춤)
+      // 최종 이동 좌표 계산
       const finalTx = slotCenterX - gridCenterX;
-      const finalTy = slotCenterY - gridBaseY;
+      const finalTy = slotCenterY - gridCenterY;
       
       target.style.setProperty('--tx', `${finalTx}px`);
       target.style.setProperty('--ty', `${finalTy}px`);
       target.style.setProperty('--rot', `0deg`);
       
+      // 선택된 카드는 다른 카드보다 위에 보이도록 함
       target.style.zIndex = 1000 + currentSelectionIndex;
 
       updateCounter();
