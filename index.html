@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3-Card Tarot Reading</title>
+  <title>Tarot Reading - Horseshoe & Full Moon</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     /* 3D Flip 및 애니메이션 관련 커스텀 CSS */
@@ -17,64 +17,68 @@
       transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
-    /* 스프레드 카드 호버 효과 */
+    /* 스프레드 카드 기본 위치 및 부채꼴 애니메이션 */
     .spread-card {
       position: absolute;
       left: 50%;
-      bottom: 40px;
+      bottom: 20px;
       transform-origin: center center;
-      transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
       z-index: 1;
       transform: translateX(calc(-50% + var(--tx, 0px))) translateY(var(--ty, 0px)) rotate(var(--rot, 0deg));
     }
 
+    /* 선택되지 않은 카드 호버 효과 */
     .spread-card.dealt:not(.is-selected):hover {
       z-index: 100 !important;
-      transform: translateX(calc(-50% + var(--tx, 0px))) translateY(calc(var(--ty, 0px) - 40px)) rotate(var(--rot, 0deg)) scale(1.2) !important;
-      filter: brightness(1.2) drop-shadow(0 0 30px rgba(129, 140, 248, 0.9));
+      transform: translateX(calc(-50% + var(--tx, 0px))) translateY(calc(var(--ty, 0px) - 50px)) rotate(var(--rot, 0deg)) scale(1.25) !important;
+      filter: brightness(1.2) drop-shadow(0 0 35px rgba(129, 140, 248, 0.9));
       border-color: #a5b4fc;
     }
 
     #card-grid {
       position: relative;
-      height: 400px;
-      margin-top: 10px;
-      perspective: 2500px;
+      height: 320px;
+      margin-top: 0px;
+      perspective: 3000px;
       width: 100%;
       overflow: visible;
     }
 
+    /* 선택된 카드: 부채꼴 안쪽(슬롯)으로 이동하며 크기 축소 */
     .spread-card.is-selected {
       z-index: 500 !important;
       opacity: 1 !important;
       pointer-events: none;
       filter: brightness(1.1) drop-shadow(0 0 25px rgba(129, 140, 248, 0.7));
+      transform: translateX(calc(-50% + var(--tx, 0px))) translateY(var(--ty, 0px)) rotate(var(--rot, 0deg)) scale(0.75) !important;
     }
 
     /* 배열법 선택 카드 스타일 */
     .spread-type-card {
-      @apply bg-slate-800 border-2 border-indigo-900/50 rounded-2xl p-4 cursor-pointer transition-all hover:border-indigo-500 hover:bg-slate-700/50 flex flex-col items-center text-center;
+      @apply bg-slate-800 border-2 border-indigo-900/50 rounded-2xl p-3 cursor-pointer transition-all hover:border-indigo-500 hover:bg-slate-700/50 flex flex-col items-center text-center;
     }
     .spread-type-card.active {
       @apply border-indigo-400 bg-indigo-900/30 ring-2 ring-indigo-500/50;
     }
 
-    /* 켈틱 크로스 등 복잡한 레이아웃을 위한 슬롯 컨테이너 */
+    /* 슬롯 컨테이너 (부채꼴 바로 위에 위치하도록 높이 조절) */
     #selected-slots {
       position: relative;
-      min-height: 400px;
+      height: 380px;
       width: 100%;
-      max-width: 800px;
+      max-width: 700px;
       margin: 0 auto;
     }
 
     .slot {
-      @apply border-2 border-dashed border-indigo-700/40 rounded-lg flex flex-col items-center justify-center absolute transition-all duration-500;
-      width: 80px;
-      height: 130px;
+      @apply border-2 border-dashed border-indigo-700/30 rounded-lg flex flex-col items-center justify-center absolute transition-all duration-700;
+      width: 65px;
+      height: 104px;
+      background: rgba(30, 41, 59, 0.4);
     }
     @media (min-width: 768px) {
-      .slot { width: 100px; height: 160px; }
+      .slot { width: 80px; height: 128px; }
     }
 
     .slot-label {
@@ -100,10 +104,9 @@
     
     <section id="state-start" class="text-center w-full flex flex-col items-center">
       <h1 class="text-4xl md:text-5xl font-bold mb-6 tracking-wider text-indigo-300">TAROT READING</h1>
-      <p class="text-slate-400 mb-8 max-w-md mx-auto">타로 마스터에게 당신의 고민을 털어놓으세요. 당신에게 맞는 배열법을 선택하고 카드를 섞어보세요.</p>
+      <p class="text-slate-400 mb-8 max-w-md mx-auto">당신만의 특별한 배열법을 선택하고 마스터의 조언을 들어보세요.</p>
       
       <div class="w-full max-w-4xl mb-10 space-y-8">
-        <!-- 사용자 정보 입력 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="space-y-4">
             <div class="flex flex-col gap-2 text-left">
@@ -114,7 +117,6 @@
                 <select id="birth-day" class="w-20 bg-slate-800 border-2 border-indigo-900/50 rounded-xl px-3 py-2 text-white focus:border-indigo-500 focus:outline-none transition-all cursor-pointer appearance-none"></select>
               </div>
             </div>
-            
             <div class="flex flex-col gap-2 text-left">
               <label class="text-indigo-300 text-sm font-semibold ml-1">성별</label>
               <select id="user-gender" class="w-full bg-slate-800 border-2 border-indigo-900/50 rounded-xl px-3 py-2 text-white focus:border-indigo-500 focus:outline-none transition-all cursor-pointer appearance-none">
@@ -122,72 +124,41 @@
                 <option value="female">여성</option>
               </select>
             </div>
-
             <div class="flex flex-col gap-2 text-left">
               <label class="text-indigo-300 text-sm font-semibold ml-1">고민 내용</label>
               <textarea id="user-concern" 
                 class="w-full h-32 p-4 bg-slate-800 border-2 border-indigo-900/50 rounded-xl text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none transition-all resize-none shadow-inner"
-                placeholder="어떤 것이 궁금하신가요? (예: 올해 연애운이 궁금해요, 이직을 고민 중이에요 등)"></textarea>
+                placeholder="어떤 것이 궁금하신가요?"></textarea>
             </div>
           </div>
 
-          <!-- 배열법 선택 -->
           <div class="flex flex-col gap-2 text-left w-full">
             <label class="text-indigo-300 text-sm font-semibold ml-1">배열법 선택</label>
             <div id="spread-selector" class="flex flex-col gap-3 w-full">
-              <div class="spread-type-card active flex flex-row items-center justify-between p-4 bg-slate-800 border-2 border-indigo-500 rounded-2xl cursor-pointer transition-all hover:bg-slate-700" data-spread="one">
-                <div class="flex flex-col text-left">
-                  <span class="text-lg font-bold text-indigo-200">원 카드</span>
-                  <span class="text-xs text-slate-400 mt-1">심플하고 명확한 해답 (1장)</span>
-                </div>
-                <div class="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio">
-                  <div class="w-3 h-3 rounded-full bg-indigo-400 transition-opacity duration-300 opacity-100"></div>
-                </div>
+              <!-- 선택 옵션들 -->
+              <div class="spread-type-card active flex flex-row items-center justify-between p-4" data-spread="one">
+                <div class="flex flex-col text-left"><span class="text-lg font-bold text-indigo-200">원 카드</span><span class="text-xs text-slate-400 mt-1">심플하고 명확한 해답 (1장)</span></div>
+                <div class="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio"><div class="w-3 h-3 rounded-full bg-indigo-400 opacity-100"></div></div>
               </div>
-              <div class="spread-type-card flex flex-row items-center justify-between p-4 bg-slate-800 border-2 border-indigo-900/50 rounded-2xl cursor-pointer transition-all hover:bg-slate-700" data-spread="three">
-                <div class="flex flex-col text-left">
-                  <span class="text-lg font-bold text-indigo-200">쓰리 카드</span>
-                  <span class="text-xs text-slate-400 mt-1">과거, 현재, 미래 분석 (3장)</span>
-                </div>
-                <div class="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio">
-                  <div class="w-3 h-3 rounded-full bg-indigo-400 transition-opacity duration-300 opacity-0"></div>
-                </div>
+              <div class="spread-type-card flex flex-row items-center justify-between p-4" data-spread="three">
+                <div class="flex flex-col text-left"><span class="text-lg font-bold text-indigo-200">쓰리 카드</span><span class="text-xs text-slate-400 mt-1">과거, 현재, 미래 분석 (3장)</span></div>
+                <div class="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio"><div class="w-3 h-3 rounded-full bg-indigo-400 opacity-0"></div></div>
               </div>
-              <div class="spread-type-card flex flex-row items-center justify-between p-4 bg-slate-800 border-2 border-indigo-900/50 rounded-2xl cursor-pointer transition-all hover:bg-slate-700" data-spread="celtic">
-                <div class="flex flex-col text-left">
-                  <span class="text-lg font-bold text-indigo-200">켈틱 크로스</span>
-                  <span class="text-xs text-slate-400 mt-1">문제의 심층적 진단 (10장)</span>
-                </div>
-                <div class="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio">
-                  <div class="w-3 h-3 rounded-full bg-indigo-400 transition-opacity duration-300 opacity-0"></div>
-                </div>
+              <div class="spread-type-card flex flex-row items-center justify-between p-4" data-spread="horseshoe">
+                <div class="flex flex-col text-left"><span class="text-lg font-bold text-indigo-200">말발굽</span><span class="text-xs text-slate-400 mt-1">과거~미래 흐름과 조언 (7장)</span></div>
+                <div class="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio"><div class="w-3 h-3 rounded-full bg-indigo-400 opacity-0"></div></div>
               </div>
-              <div class="spread-type-card flex flex-row items-center justify-between p-4 bg-slate-800 border-2 border-indigo-900/50 rounded-2xl cursor-pointer transition-all hover:bg-slate-700" data-spread="horseshoe">
-                <div class="flex flex-col text-left">
-                  <span class="text-lg font-bold text-indigo-200">말발굽</span>
-                  <span class="text-xs text-slate-400 mt-1">과거~미래 흐름과 조언 (7장)</span>
-                </div>
-                <div class="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio">
-                  <div class="w-3 h-3 rounded-full bg-indigo-400 transition-opacity duration-300 opacity-0"></div>
-                </div>
+              <div class="spread-type-card flex flex-row items-center justify-between p-4" data-spread="fullmoon">
+                <div class="flex flex-col text-left"><span class="text-lg font-bold text-indigo-200">보름달</span><span class="text-xs text-slate-400 mt-1">에너지 상태와 목표 성찰 (7장)</span></div>
+                <div class="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio"><div class="w-3 h-3 rounded-full bg-indigo-400 opacity-0"></div></div>
               </div>
-              <div class="spread-type-card flex flex-row items-center justify-between p-4 bg-slate-800 border-2 border-indigo-900/50 rounded-2xl cursor-pointer transition-all hover:bg-slate-700" data-spread="fullmoon">
-                <div class="flex flex-col text-left">
-                  <span class="text-lg font-bold text-indigo-200">보름달</span>
-                  <span class="text-xs text-slate-400 mt-1">에너지 상태와 목표 성찰 (7장)</span>
-                </div>
-                <div class="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio">
-                  <div class="w-3 h-3 rounded-full bg-indigo-400 transition-opacity duration-300 opacity-0"></div>
-                </div>
+              <div class="spread-type-card flex flex-row items-center justify-between p-4" data-spread="celtic">
+                <div class="flex flex-col text-left"><span class="text-lg font-bold text-indigo-200">켈틱 크로스</span><span class="text-xs text-slate-400 mt-1">문제의 심층적 진단 (10장)</span></div>
+                <div class="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio"><div class="w-3 h-3 rounded-full bg-indigo-400 opacity-0"></div></div>
               </div>
-              <div class="spread-type-card flex flex-row items-center justify-between p-4 bg-slate-800 border-2 border-indigo-900/50 rounded-2xl cursor-pointer transition-all hover:bg-slate-700" data-spread="tree">
-                <div class="flex flex-col text-left">
-                  <span class="text-lg font-bold text-indigo-200">생명의 나무</span>
-                  <span class="text-xs text-slate-400 mt-1">내외부 상황의 총체적 관망 (10장)</span>
-                </div>
-                <div class="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio">
-                  <div class="w-3 h-3 rounded-full bg-indigo-400 transition-opacity duration-300 opacity-0"></div>
-                </div>
+              <div class="spread-type-card flex flex-row items-center justify-between p-4" data-spread="tree">
+                <div class="flex flex-col text-left"><span class="text-lg font-bold text-indigo-200">생명의 나무</span><span class="text-xs text-slate-400 mt-1">내외부 상황의 총체적 관망 (10장)</span></div>
+                <div class="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center spread-radio"><div class="w-3 h-3 rounded-full bg-indigo-400 opacity-0"></div></div>
               </div>
             </div>
           </div>
@@ -200,607 +171,259 @@
       <div id="shuffle-deck-visual" class="hidden mt-12 w-32 h-48 bg-indigo-900 rounded-xl border-2 border-indigo-400 flex items-center justify-center bg-cover bg-center">
         <span class="text-white font-bold drop-shadow-md">Shuffling...</span>
       </div>
-      <script>
-        // 생년월일 드롭다운 초기화
-        const yearSelect = document.getElementById('birth-year');
-        const monthSelect = document.getElementById('birth-month');
-        const daySelect = document.getElementById('birth-day');
-        
-        const currentYear = new Date().getFullYear();
-        for (let y = currentYear; y >= currentYear - 100; y--) {
-          const opt = document.createElement('option');
-          opt.value = y; opt.textContent = `${y}년`;
-          yearSelect.appendChild(opt);
-        }
-        for (let m = 1; m <= 12; m++) {
-          const opt = document.createElement('option');
-          opt.value = m; opt.textContent = `${m}월`;
-          monthSelect.appendChild(opt);
-        }
-        for (let d = 1; d <= 31; d++) {
-          const opt = document.createElement('option');
-          opt.value = d; opt.textContent = `${d}일`;
-          daySelect.appendChild(opt);
-        }
-        
-        document.getElementById('shuffle-deck-visual').style.backgroundImage = 'url("https://upload.wikimedia.org/wikipedia/commons/5/5c/Tarot_card_back_RWS.jpg")';
-      </script>
     </section>
 
     <section id="state-spread" class="hidden w-full max-w-5xl text-center">
       <h2 class="text-2xl font-semibold mb-2 text-indigo-300">카드를 선택해 주세요</h2>
-      <p id="selection-counter" class="text-slate-400 mb-8">선택된 카드: 0 / 0</p>
+      <p id="selection-counter" class="text-slate-400 mb-6">선택된 카드: 0 / 0</p>
       
-      <!-- 선택된 카드들이 위치할 슬롯 추가 (JS에서 동적 생성) -->
-      <div id="selected-slots" class="relative mb-12"></div>
-
-      <div id="card-grid" class="flex flex-wrap justify-center gap-3 md:gap-4 relative"></div>
+      <div id="selected-slots" class="relative"></div>
+      <div id="card-grid" class="flex flex-wrap justify-center relative"></div>
     </section>
 
     <section id="state-result" class="hidden w-full max-w-5xl">
-      <h2 class="text-3xl font-bold mb-10 text-center text-indigo-300">당신의 타로 리딩 결과</h2>
-      <div id="result-container" class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        </div>
+      <h2 class="text-3xl font-bold mb-10 text-center text-indigo-300">타로 리딩 결과</h2>
+      <div id="result-container"></div>
       <div class="mt-12 text-center">
-        <button id="btn-restart" class="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-full font-semibold transition-all">
-          다시 뽑기
-        </button>
+        <button id="btn-restart" class="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-full font-semibold transition-all">다시 뽑기</button>
       </div>
     </section>
 
   </main>
 
   <script>
-    // [설정] Cloudflare Worker URL을 여기에 입력하세요.
+    // [설정] Cloudflare Worker URL
     const WORKER_URL = "https://tarobot.1000gkxhd1.workers.dev/";
 
-    // [1. 데이터 구조] 메이저 아르카나 22장 상세 데이터 (기본값)
+    // 타로 덱 데이터 (메이저 22장)
     const tarotDeck = [
-      { 
-        id: 0, name: "0. The Fool (바보)", 
-        image: "https://upload.wikimedia.org/wikipedia/commons/9/90/RWS_Tarot_00_Fool.jpg", 
-        meaning_up: "새로운 모험의 시작이네요! 지금 당신은 아무런 걱정 없이 순수한 마음으로 첫발을 내딛고 있어요. 주위에서 위험하다고 말릴지 몰라도, 당신의 무한한 가능성을 믿고 나아가 보세요. 가벼운 발걸음이 예상치 못한 행운을 불러올 거예요.", 
-        meaning_rev: "잠깐만요! 너무 앞만 보고 달리는 거 아닌가요? 지금은 열정보다 신중함이 필요한 때예요. 계획 없는 무모한 선택은 자칫 위험한 상황을 만들 수 있어요. 잠시 멈춰서 발밑을 잘 살피고, 현실적인 조언에 귀를 기울여보세요." 
-      },
-      { 
-        id: 1, name: "I. The Magician (마법사)", 
-        image: "https://upload.wikimedia.org/wikipedia/commons/d/de/RWS_Tarot_01_Magician.jpg", 
-        meaning_up: "당신은 이미 모든 준비가 끝났어요! 당신의 손에는 세상을 바꿀 도구와 재능이 모두 쥐어져 있네요. 강한 의지만 있다면 무엇이든 현실로 만들어낼 수 있는 창조적인 에너지가 넘쳐흐르는 시기입니다. 당신의 능력을 마음껏 펼쳐보세요.", 
-        meaning_rev: "자신의 재능을 너무 과신하거나, 혹은 엉뚱한 곳에 힘을 낭비하고 있진 않나요? 겉모습만 화려하게 포장하기보다 진실된 행동이 필요해요. 누군가를 속이려 하거나 꼼수를 부리는 건 결국 자신에게 독이 되어 돌아올 수 있으니 주의하세요." 
-      },
-      { 
-        id: 2, name: "II. The High Priestess (여사제)", 
-        image: "https://upload.wikimedia.org/wikipedia/commons/8/88/RWS_Tarot_02_High_Priestess.jpg", 
-        meaning_up: "지금은 밖으로 나서기보다 내면의 목소리에 집중해야 할 때입니다. 당신의 직관이 아주 날카로워져 있거든요. 겉으로 드러나지 않은 비밀이나 지혜를 찾게 될 거예요. 차분하게 상황을 지켜보며 당신의 통찰력을 믿어보세요.", 
-        meaning_rev: "마음속이 너무 복잡해서 갈피를 못 잡고 있지는 않나요? 겉으로는 차분해 보이지만 속은 요동치고 있을지 몰라요. 타인의 시선에 너무 신경 쓰지 말고, 당신의 진심이 무엇인지 다시 한번 생각해보는 시간이 필요해 보입니다." 
-      },
-      { 
-        id: 3, name: "III. The Empress (여황제)", 
-        image: "https://upload.wikimedia.org/wikipedia/commons/d/d2/RWS_Tarot_03_Empress.jpg", 
-        meaning_up: "축하해요! 풍요로움과 행복이 가득한 시기네요. 당신이 공들여 온 일들이 아름다운 결실을 맺을 거예요. 주변 사람들에게 사랑을 나누어주면 그 행복은 배가 되어 돌아옵니다. 지금 이 여유와 평화로운 기운을 마음껏 즐기세요.", 
-        meaning_rev: "요즘 너무 다른 사람에게 의존하고 있거나 게을러진 건 아닐까요? 풍요로움에 취해 정작 중요한 것을 놓치고 있을 수 있어요. 때로는 지나친 간섭이나 과보호가 갈등을 만들기도 하니, 적당한 거리두기가 필요할 때입니다." 
-      },
-      { 
-        id: 4, name: "IV. The Emperor (황제)", 
-        image: "https://upload.wikimedia.org/wikipedia/commons/c/c3/RWS_Tarot_04_Emperor.jpg", 
-        meaning_up: "강력한 리더십과 카리스마가 돋보이는군요. 당신은 상황을 완벽하게 통제하고 안정을 찾을 능력이 있습니다. 질서와 체계적인 계획을 통해 목표를 달성할 수 있는 시기예요. 당신의 권위를 믿고 당당하게 밀고 나가세요.", 
-        meaning_rev: "너무 고집을 피우거나 독단적으로 행동하고 있지는 않은지 돌아보세요. 당신의 강압적인 태도가 주변 사람들을 지치게 할 수 있습니다. 융통성을 발휘하지 않으면 쌓아온 성벽이 무너질 수도 있으니 부드러운 리더십이 필요해요." 
-      },
-      { 
-        id: 5, name: "V. The Hierophant (교황)", 
-        image: "https://upload.wikimedia.org/wikipedia/commons/8/8d/RWS_Tarot_05_Hierophant.jpg", 
-        meaning_up: "전통과 원칙을 지키는 것이 중요한 시기입니다. 믿을 만한 멘토나 조언자를 만나 올바른 길로 인도받을 수 있어요. 지금은 파격적인 변화보다는 검증된 방식과 질서를 따르는 것이 당신에게 더 큰 안정을 가져다줄 거예요.", 
-        meaning_rev: "낡은 생각이나 고정관념에 갇혀 새로운 기회를 놓치고 있나요? 너무 보수적인 태도는 성장을 방해할 뿐이에요. 때로는 정해진 틀을 깨고 나만의 방식을 시도해 보는 용기가 필요합니다. 맹목적인 믿음은 경계하세요." 
-      },
-      { 
-        id: 6, name: "VI. The Lovers (연인)", 
-        image: "https://upload.wikimedia.org/wikipedia/commons/d/db/RWS_Tarot_06_Lovers.jpg", 
-        meaning_up: "아름다운 조화와 사랑의 기운이 느껴지네요! 연인과의 관계가 깊어지거나, 인생에서 아주 중요한 선택의 기로에 서게 될 것입니다. 당신의 마음이 진정으로 원하는 것이 무엇인지 따라가세요. 가치관이 일치하는 최고의 파트너를 만나게 될 수도 있어요.", 
-        meaning_rev: "관계에서 불협화음이 들려오고 있군요. 선택의 순간에서 갈팡질팡하며 잘못된 결정을 내릴 수도 있습니다. 겉모습이나 유혹에 휘둘리지 말고, 관계의 본질을 다시 한번 생각해보세요. 지금은 감정보다 이성적인 판단이 필요합니다." 
-      },
-      { 
-        id: 7, name: "VII. The Chariot (전차)", 
-        image: "https://upload.wikimedia.org/wikipedia/commons/9/9b/RWS_Tarot_07_Chariot.jpg", 
-        meaning_up: "강력한 추진력으로 목표를 향해 달려가세요! 어떤 장애물도 당신의 의지를 꺾을 수 없습니다. 승리는 이미 당신의 것이나 다름없어요. 다만, 감정과 이성의 균형을 잘 잡아야 끝까지 완주할 수 있다는 사실을 잊지 마세요.", 
-        meaning_rev: "방향을 잃고 우왕좌왕하고 있지는 않나요? 열정만 앞서다가는 통제력을 잃고 사고가 날 수 있어요. 지금은 무조건 전진하기보다, 잠시 멈춰서 목적지가 어디인지 점검하고 에너지를 조절해야 할 때입니다." 
-      },
-      { 
-        id: 8, name: "VIII. Strength (힘)", 
-        image: "https://upload.wikimedia.org/wikipedia/commons/f/f5/RWS_Tarot_08_Strength.jpg", 
-        meaning_up: "부드러운 카리스마의 승리네요! 당신은 거친 맹수조차 다스릴 수 있는 내면의 힘과 인내심을 가지고 있습니다. 폭력이나 강압이 아닌, 이해와 포용으로 문제를 해결해보세요. 당신의 따뜻한 에너지가 결국 모든 상황을 평정할 거예요.", 
-        meaning_rev: "자신감이 떨어지고 두려움이 앞서고 있나요? 내면의 본능을 다스리지 못해 화를 내거나 비겁하게 행동할 수 있습니다. 스스로를 믿지 못하는 마음이 가장 큰 적이에요. 다시 한번 마음을 가다듬고 내 안의 용기를 찾아보세요." 
-      },
-      { 
-        id: 9, name: "IX. The Hermit (은둔자)", 
-        image: "https://upload.wikimedia.org/wikipedia/commons/4/4d/RWS_Tarot_09_Hermit.jpg", 
-        meaning_up: "세상의 소란스러움에서 잠시 벗어나 혼자만의 시간을 가져보세요. 당신의 내면 깊은 곳에 이미 답이 있습니다. 깊은 성찰을 통해 진정한 자아를 발견하고 지혜를 얻게 될 시기입니다. 고독은 외로움이 아니라 성숙을 위한 과정이에요.", 
-        meaning_rev: "혼자만의 세계에 너무 갇혀서 주변과 단절되어 있진 않나요? 고집스럽게 자신의 생각만 옳다고 믿거나 현실을 외면하고 있을 수 있어요. 이제는 등불을 들고 밖으로 나와 세상과 소통해야 할 때입니다. 고립은 답이 아닙니다." 
-      },
-      { 
-        id: 10, name: "X. Wheel of Fortune (운명의 수레바퀴)", 
-        image: "https://upload.wikimedia.org/wikipedia/commons/3/37/RWS_Tarot_10_Wheel_of_Fortune.jpg", 
-        meaning_up: "인생의 커다란 전환점이 찾아왔습니다! 운명의 수레바퀴가 당신에게 유리한 방향으로 돌기 시작했어요. 갑작스러운 행운이나 변화가 찾아온다면 주저하지 말고 올라타세요. 모든 것은 흘러가는 법이니, 지금 이 기회를 놓치지 마세요.", 
-        meaning_rev: "운의 흐름이 잠시 좋지 않은 쪽으로 기울었네요. 뜻대로 되지 않는 상황에 답답함을 느낄 수 있습니다. 하지만 기억하세요, 수레바퀴는 계속 돕니다. 지금의 불운에 너무 좌절하지 말고 다음 기회를 위해 조용히 준비하며 기다리세요." 
-      },
-      { 
-        id: 11, name: "XI. Justice (정의)", 
-        image: "https://upload.wikimedia.org/wikipedia/commons/e/e0/RWS_Tarot_11_Justice.jpg", 
-        meaning_up: "뿌린 대로 거두는 법이죠. 당신의 노력에 대한 공정한 대가를 받게 될 것입니다. 지금은 감정에 치우치지 말고 냉철하고 객관적으로 판단해야 해요. 진실은 반드시 밝혀질 것이며, 모든 일은 사필귀정으로 흘러가게 됩니다.", 
-        meaning_rev: "불공정한 대우를 받거나 편견에 치우친 판단을 내릴 수 있는 위험이 있어요. 자신의 잘못을 인정하지 않고 책임을 회피하려고 하지는 않나요? 균형이 깨진 상황에서는 결코 좋은 결과가 나올 수 없으니 다시 한번 자신을 돌아보세요." 
-      },
-      { 
-        id: 12, name: "XII. The Hanged Man (매달린 사람)", 
-        image: "https://upload.wikimedia.org/wikipedia/commons/2/2b/RWS_Tarot_12_Hanged_Man.jpg", 
-        meaning_up: "지금은 멈춰서 세상을 거꾸로 바라볼 때입니다. 남들과는 다른 관점에서 생각해보면 새로운 해결책이 보일 거예요. 당장의 성과가 없어 답답할 수 있지만, 이 기다림과 희생은 더 큰 도약을 위한 값진 자양분이 될 것입니다.", 
-        meaning_rev: "아무런 의미 없는 희생을 하고 있거나 제자리걸음만 반복하고 있진 않나요? 헛된 기대를 품고 시간을 낭비하고 있을 수 있습니다. 이제는 묶인 줄을 풀고 내려와야 해요. 변화를 거부하는 고집은 당신을 더 힘들게 할 뿐입니다." 
-      },
-      { 
-        id: 13, name: "XIII. Death (죽음)", 
-        image: "https://upload.wikimedia.org/wikipedia/commons/d/d7/RWS_Tarot_13_Death.jpg", 
-        meaning_up: "두려워하지 마세요. 끝은 곧 새로운 시작을 의미합니다. 당신의 인생에서 낡고 쓸모없는 것들이 정리되고 새로운 싹이 돋아날 준비를 하고 있어요. 과거를 과감히 놓아주어야 더 멋진 미래가 찾아옵니다. 변화의 파도를 기쁘게 맞이하세요.", 
-        meaning_rev: "이미 끝난 일에 미련을 갖고 매달리고 있군요. 변화가 두려워 억지로 정체된 상황을 유지하려 하면 고통만 길어질 뿐이에요. 이제는 인정하고 보내줘야 합니다. 낡은 것을 비워내야만 새로운 행운이 들어올 자리가 생깁니다." 
-      },
-      { 
-        id: 14, name: "XIV. Temperance (절제)", 
-        image: "https://upload.wikimedia.org/wikipedia/commons/f/f8/RWS_Tarot_14_Temperance.jpg", 
-        meaning_up: "서로 다른 두 기운이 만나 조화를 이루는 시기입니다. 조급해하지 말고 천천히 여유를 가지고 조율해보세요. 당신의 균형 잡힌 마음이 평화를 가져다줄 거예요. 인내심을 갖고 중용을 지킨다면 모든 일이 순조롭게 풀릴 것입니다.", 
-        meaning_rev: "마음의 균형이 깨져버렸네요. 감정 기복이 심하거나 어느 한쪽으로 치우친 극단적인 태도를 보이고 있을지 몰라요. 성급한 결정은 일을 그르칠 수 있습니다. 지금 가장 필요한 건 흥분을 가라앉히고 평정심을 되찾는 일이에요." 
-      },
-      { 
-        id: 15, name: "XV. The Devil (악마)", 
-        image: "https://upload.wikimedia.org/wikipedia/commons/5/55/RWS_Tarot_15_Devil.jpg", 
-        meaning_up: "유혹의 손길이 아주 강하게 뻗어오고 있네요. 달콤한 유혹이나 물질적인 욕망, 혹은 나쁜 습관에 중독되어 자유를 잃고 있을 수 있습니다. 지금의 쾌락이 나를 갉아먹고 있지는 않은지 냉정하게 살펴보세요. 스스로를 묶고 있는 사슬을 끊어낼 용기가 필요합니다.", 
-        meaning_rev: "드디어 어둠의 터널에서 빠져나올 기회가 생겼습니다! 나를 억누르던 구속과 집착에서 벗어나 자유를 되찾기 시작했네요. 이제는 무엇이 소중한지 깨달았으니, 다시는 과거의 잘못된 길로 돌아가지 않도록 정신을 바짝 차려야 합니다." 
-      },
-      { 
-        id: 16, name: "XVI. The Tower (탑)", 
-        image: "https://upload.wikimedia.org/wikipedia/commons/5/53/RWS_Tarot_16_Tower.jpg", 
-        meaning_up: "충격적인 변화가 찾아올 수 있습니다. 하지만 걱정하지 마세요. 이 붕괴는 잘못 쌓아 올린 거짓된 기반을 무너뜨리고 진실을 드러내기 위한 과정일 뿐이에요. 갑작스러운 사건이 일어나더라도 당황하지 말고, 더 단단한 새 집을 지을 기회로 삼으세요.", 
-        meaning_rev: "위태위태한 상황이 계속 이어지고 있군요. 폭풍우가 몰아치기 전의 고요함 같은 느낌일까요? 억지로 위기를 모면하려고 해봐야 근본적인 문제는 해결되지 않습니다. 차라리 지금 터질 것이 터지는 게 나중을 위해서는 더 나은 선택일 수 있어요." 
-      },
-      { 
-        id: 17, name: "XVII. The Star (별)", 
-        image: "https://upload.wikimedia.org/wikipedia/commons/d/db/RWS_Tarot_17_Star.jpg", 
-        meaning_up: "어두운 밤하늘에 반짝이는 별을 찾으셨군요! 희망과 치유의 에너지가 당신을 감싸고 있습니다. 힘든 시간은 이제 지나갔어요. 당신의 꿈을 향해 다시 한 걸음 나아가보세요. 당신은 축복받은 존재이며, 밝은 미래가 약속되어 있습니다.", 
-        meaning_rev: "희망이 보이지 않아 낙담하고 있나요? 꿈과 현실 사이의 괴리감 때문에 무기력함을 느낄 수 있습니다. 하지만 별은 구름 뒤에 잠시 가려져 있을 뿐이에요. 부정적인 생각에 빠져 스스로를 괴롭히지 마세요. 당신에게는 아직 반짝이는 재능이 남아있습니다." 
-      },
-      { 
-        id: 18, name: "XVIII. The Moon (달)", 
-        image: "https://upload.wikimedia.org/wikipedia/commons/7/7f/RWS_Tarot_18_Moon.jpg", 
-        meaning_up: "마음속에 안개가 자욱하게 낀 것처럼 불안하고 혼란스러운 시기네요. 겉으로 보이는 게 전부가 아닐 수 있으니 주의하세요. 지금은 잠재의식 속의 두려움이 현실을 왜곡하고 있을지 몰라요. 서두르지 말고 안개가 걷힐 때까지 차분하게 기다려보세요.", 
-        meaning_rev: "드디어 불안과 공포에서 벗어나 진실을 마주하게 되었군요! 당신을 괴롭히던 오해와 환상이 사라지고 상황이 명확해지고 있습니다. 이제는 안심하고 앞으로 나아가도 좋아요. 당신의 직관이 다시 올바른 방향을 가리키기 시작했습니다." 
-      },
-      { 
-        id: 19, name: "XIX. The Sun (태양)", 
-        image: "https://upload.wikimedia.org/wikipedia/commons/1/17/RWS_Tarot_19_Sun.jpg", 
-        meaning_up: "최고의 카드가 나왔네요! 당신의 앞길에 눈부신 성공과 기쁨이 가득합니다. 아이처럼 순수한 열정으로 세상을 즐겨보세요. 당신의 긍정적인 에너지가 주변 사람들에게도 큰 행복을 전달할 거예요. 지금 이 순간을 마음껏 누릴 자격이 충분합니다!", 
-        meaning_rev: "잠시 구름이 태양을 가렸네요. 성공이 조금 늦어지거나 기대했던 것보다 결과가 미흡할 수 있습니다. 하지만 이건 일시적인 현상일 뿐이에요. 너무 낙관만 하다가 실수를 할 수 있으니, 아주 조금의 주의만 기울인다면 다시 밝은 빛을 보게 될 것입니다." 
-      },
-      { 
-        id: 20, name: "XX. Judgement (심판)", 
-        image: "https://upload.wikimedia.org/wikipedia/commons/d/dd/RWS_Tarot_20_Judgement.jpg", 
-        meaning_up: "새로운 부활의 나팔 소리가 들리네요! 과거의 노력에 대한 최종적인 평가가 내려지고 새로운 기회가 찾아올 것입니다. 당신의 양심과 신념에 따라 결단을 내려야 할 때예요. 지난날의 후회는 털어버리고 당당하게 새로운 삶으로 나아가세요.", 
-        meaning_rev: "결정적인 순간에 망설이며 기회를 놓치고 있진 않나요? 과거의 잘못에 묶여 스스로를 자책하고 있을지 몰라요. 하지만 심판은 당신을 벌하기 위함이 아니라 깨우치기 위함입니다. 이제는 현실을 직시하고 변화를 받아들여야 할 때입니다." 
-      },
-      { 
-        id: 21, name: "XXI. The World (세계)", 
-        image: "https://upload.wikimedia.org/wikipedia/commons/f/ff/RWS_Tarot_21_World.jpg", 
-        meaning_up: "완벽한 마무리와 성취를 축하합니다! 당신의 긴 여정이 드디어 아름다운 결실을 맺었네요. 당신은 이제 하나의 세상을 완성했고, 더 넓은 세상으로 나갈 준비가 되었습니다. 조화롭고 완벽한 행복을 마음껏 만끽하세요. 당신이 주인공입니다!", 
-        meaning_rev: "거의 다 왔는데 마지막 한 끝이 부족하네요. 목표 달성이 조금 지연되거나 왠지 모를 공허함을 느낄 수 있습니다. 하지만 포기하지 마세요. 아주 작은 퍼즐 조각 하나만 더 채우면 완벽한 그림이 완성될 것입니다. 조금만 더 힘을 내세요!" 
-      }
+      { id: 0, name: "0. The Fool (바보)", image: "https://upload.wikimedia.org/wikipedia/commons/9/90/RWS_Tarot_00_Fool.jpg" },
+      { id: 1, name: "I. The Magician (마법사)", image: "https://upload.wikimedia.org/wikipedia/commons/d/de/RWS_Tarot_01_Magician.jpg" },
+      { id: 2, name: "II. The High Priestess (여사제)", image: "https://upload.wikimedia.org/wikipedia/commons/8/88/RWS_Tarot_02_High_Priestess.jpg" },
+      { id: 3, name: "III. The Empress (여황제)", image: "https://upload.wikimedia.org/wikipedia/commons/d/d2/RWS_Tarot_03_Empress.jpg" },
+      { id: 4, name: "IV. The Emperor (황제)", image: "https://upload.wikimedia.org/wikipedia/commons/c/c3/RWS_Tarot_04_Emperor.jpg" },
+      { id: 5, name: "V. The Hierophant (교황)", image: "https://upload.wikimedia.org/wikipedia/commons/8/8d/RWS_Tarot_05_Hierophant.jpg" },
+      { id: 6, name: "VI. The Lovers (연인)", image: "https://upload.wikimedia.org/wikipedia/commons/d/db/RWS_Tarot_06_Lovers.jpg" },
+      { id: 7, name: "VII. The Chariot (전차)", image: "https://upload.wikimedia.org/wikipedia/commons/9/9b/RWS_Tarot_07_Chariot.jpg" },
+      { id: 8, name: "VIII. Strength (힘)", image: "https://upload.wikimedia.org/wikipedia/commons/f/f5/RWS_Tarot_08_Strength.jpg" },
+      { id: 9, name: "IX. The Hermit (은둔자)", image: "https://upload.wikimedia.org/wikipedia/commons/4/4d/RWS_Tarot_09_Hermit.jpg" },
+      { id: 10, name: "X. Wheel of Fortune (운명의 수레바퀴)", image: "https://upload.wikimedia.org/wikipedia/commons/3/37/RWS_Tarot_10_Wheel_of_Fortune.jpg" },
+      { id: 11, name: "XI. Justice (정의)", image: "https://upload.wikimedia.org/wikipedia/commons/e/e0/RWS_Tarot_11_Justice.jpg" },
+      { id: 12, name: "XII. The Hanged Man (매달린 사람)", image: "https://upload.wikimedia.org/wikipedia/commons/2/2b/RWS_Tarot_12_Hanged_Man.jpg" },
+      { id: 13, name: "XIII. Death (죽음)", image: "https://upload.wikimedia.org/wikipedia/commons/d/d7/RWS_Tarot_13_Death.jpg" },
+      { id: 14, name: "XIV. Temperance (절제)", image: "https://upload.wikimedia.org/wikipedia/commons/f/f8/RWS_Tarot_14_Temperance.jpg" },
+      { id: 15, name: "XV. The Devil (악마)", image: "https://upload.wikimedia.org/wikipedia/commons/5/55/RWS_Tarot_15_Devil.jpg" },
+      { id: 16, name: "XVI. The Tower (탑)", image: "https://upload.wikimedia.org/wikipedia/commons/5/53/RWS_Tarot_16_Tower.jpg" },
+      { id: 17, name: "XVII. The Star (별)", image: "https://upload.wikimedia.org/wikipedia/commons/d/db/RWS_Tarot_17_Star.jpg" },
+      { id: 18, name: "XVIII. The Moon (달)", image: "https://upload.wikimedia.org/wikipedia/commons/7/7f/RWS_Tarot_18_Moon.jpg" },
+      { id: 19, name: "XIX. The Sun (태양)", image: "https://upload.wikimedia.org/wikipedia/commons/1/17/RWS_Tarot_19_Sun.jpg" },
+      { id: 20, name: "XX. Judgement (심판)", image: "https://upload.wikimedia.org/wikipedia/commons/d/dd/RWS_Tarot_20_Judgement.jpg" },
+      { id: 21, name: "XXI. The World (세계)", image: "https://upload.wikimedia.org/wikipedia/commons/f/ff/RWS_Tarot_21_World.jpg" }
     ];
 
-    // [배열법 설정]
+    // 배열법 설정
     const spreadConfigs = {
-      one: {
-        name: "원 카드",
-        count: 1,
-        positions: ["해답"],
-        layout: [{ x: 0, y: -80 }] 
-      },
-      three: {
-        name: "쓰리 카드",
-        count: 3,
-        positions: ["과거", "현재", "미래"],
-        layout: [{ x: -140, y: -80 }, { x: 0, y: -80 }, { x: 140, y: -80 }]
-      },
+      one: { name: "원 카드", count: 1, positions: ["해답"], layout: [{ x: 0, y: -80 }] },
+      three: { name: "쓰리 카드", count: 3, positions: ["과거", "현재", "미래"], layout: [{ x: -140, y: -80 }, { x: 0, y: -80 }, { x: 140, y: -80 }] },
       horseshoe: {
-        name: "말발굽",
-        count: 7,
+        name: "말발굽", count: 7,
         positions: ["과거", "현재", "가까운 미래", "조언/대책", "주변 환경", "장애물", "최종 결과"],
-        layout: [
-          { x: -210, y: 20 },   // 과거
-          { x: -140, y: -80 },  // 현재
-          { x: -70, y: -160 },  // 가까운 미래
-          { x: 0, y: -200 },    // 조언
-          { x: 70, y: -160 },   // 주변
-          { x: 140, y: -80 },   // 장애물
-          { x: 210, y: 20 }     // 결과
-        ]
+        layout: [{ x: -210, y: 20 }, { x: -140, y: -80 }, { x: -70, y: -160 }, { x: 0, y: -200 }, { x: 70, y: -160 }, { x: 140, y: -80 }, { x: 210, y: 20 }]
       },
       fullmoon: {
-        name: "보름달",
-        count: 7,
+        name: "보름달", count: 7,
         positions: ["현재의 삶", "인간관계", "방해 요소", "장애물 극복", "내가 할 일", "외부의 도움", "예상 결과"],
-        layout: [
-          { x: 0, y: 0 },       // 1 (중앙)
-          { x: -150, y: -50 },  // 2 (좌중)
-          { x: 150, y: -50 },   // 3 (우중)
-          { x: -100, y: -180 }, // 4 (좌상)
-          { x: 100, y: -180 },  // 5 (우상)
-          { x: 0, y: -250 },    // 6 (최상)
-          { x: 0, y: 120 }      // 7 (하단)
-        ]
+        layout: [{ x: 0, y: 0 }, { x: -150, y: -50 }, { x: 150, y: -50 }, { x: -100, y: -180 }, { x: 100, y: -180 }, { x: 0, y: -250 }, { x: 0, y: 120 }]
       },
       celtic: {
-        name: "켈틱 크로스",
-        count: 10,
+        name: "켈틱 크로스", count: 10,
         positions: ["현재 상황", "장애물/도움", "무의식/기반", "과거", "의식/목표", "가까운 미래", "당신의 태도", "주변 환경", "희망과 공포", "최종 결과"],
-        layout: [
-          { x: -120, y: -50 },    // 1. 현재
-          { x: -120, y: -50, rot: 90 }, // 2. 장애
-          { x: -120, y: 80 },     // 3. 기반
-          { x: -260, y: -50 },    // 4. 과거
-          { x: -120, y: -180 },   // 5. 목표
-          { x: 20, y: -50 },      // 6. 미래
-          { x: 180, y: 130 },     // 7. 태도
-          { x: 180, y: 30 },      // 8. 환경
-          { x: 180, y: -70 },     // 9. 희망/공포
-          { x: 180, y: -170 }     // 10. 결과
-        ]
+        layout: [{ x: -120, y: -50 }, { x: -120, y: -50, rot: 90 }, { x: -120, y: 80 }, { x: -260, y: -50 }, { x: -120, y: -180 }, { x: 20, y: -50 }, { x: 180, y: 130 }, { x: 180, y: 30 }, { x: 180, y: -70 }, { x: 180, y: -170 }]
       },
       tree: {
-        name: "생명의 나무",
-        count: 10,
-        positions: ["Kether(영성)", "Chokmah(지혜)", "Binah(이해)", "Chesed(자비)", "Geburah(힘)", "Tiphareth(미다움)", "Netzach(승리)", "Hod(영광)", "Yesod(기초)", "Malkuth(왕국)"],
-        layout: [
-          { x: 0, y: -280 },   // 1
-          { x: 110, y: -220 }, // 2
-          { x: -110, y: -220 },// 3
-          { x: 110, y: -110 }, // 4
-          { x: -110, y: -110 },// 5
-          { x: 0, y: -50 },    // 6
-          { x: 110, y: 60 },   // 7
-          { x: -110, y: 60 },  // 8
-          { x: 0, y: 130 },    // 9
-          { x: 0, y: 240 }     // 10
-        ]
+        name: "생명의 나무", count: 10,
+        positions: ["영성", "지혜", "이해", "자비", "힘", "아름다움", "승리", "영광", "기초", "왕국"],
+        layout: [{ x: 0, y: -280 }, { x: 110, y: -220 }, { x: -110, y: -220 }, { x: 110, y: -110 }, { x: -110, y: -110 }, { x: 0, y: -50 }, { x: 110, y: 60 }, { x: -110, y: 60 }, { x: 0, y: 130 }, { x: 0, y: 240 }]
       }
     };
 
-    // 변수 상태 관리
     let currentSpread = "one";
     let shuffledDeck = [];
     let selectedCards = [];
-    let userConcern = ""; 
+    let userConcern = "";
     let userInfo = {};
 
-    // DOM 요소
+    // DOM 요소 초기화
     const stateStart = document.getElementById('state-start');
-    const inputConcern = document.getElementById('user-concern');
     const stateSpread = document.getElementById('state-spread');
     const stateResult = document.getElementById('state-result');
     const btnShuffle = document.getElementById('btn-shuffle');
-    const shuffleVisual = document.getElementById('shuffle-deck-visual');
-    const cardGrid = document.getElementById('card-grid');
-    const selectedSlots = document.getElementById('selected-slots');
-    const selectionCounter = document.getElementById('selection-counter');
-    const resultContainer = document.getElementById('result-container');
-    const btnRestart = document.getElementById('btn-restart');
     const spreadSelector = document.getElementById('spread-selector');
+    const selectedSlots = document.getElementById('selected-slots');
+    const cardGrid = document.getElementById('card-grid');
 
-    // 배열법 선택 이벤트
+    // 생년월일 초기화
+    (function initDateSelects() {
+      const yS = document.getElementById('birth-year'), mS = document.getElementById('birth-month'), dS = document.getElementById('birth-day');
+      const curY = new Date().getFullYear();
+      for(let y=curY; y>=curY-100; y--) yS.add(new Option(y+"년", y));
+      for(let m=1; m<=12; m++) mS.add(new Option(m+"월", m));
+      for(let d=1; d<=31; d++) dS.add(new Option(d+"일", d));
+    })();
+
+    // 배열법 선택
     spreadSelector.addEventListener('click', (e) => {
       const card = e.target.closest('.spread-type-card');
       if (!card) return;
-      
-      // 모든 카드에서 active 제거 및 라디오 버튼 초기화
       document.querySelectorAll('.spread-type-card').forEach(c => {
         c.classList.remove('active');
-        c.classList.remove('border-indigo-500');
-        c.classList.add('border-indigo-900/50');
         const dot = c.querySelector('.spread-radio div');
         if (dot) dot.style.opacity = '0';
       });
-      
-      // 선택된 카드 활성화
       card.classList.add('active');
-      card.classList.remove('border-indigo-900/50');
-      card.classList.add('border-indigo-500');
       const activeDot = card.querySelector('.spread-radio div');
       if (activeDot) activeDot.style.opacity = '1';
-      
       currentSpread = card.dataset.spread;
     });
 
-    // [3. 핵심 자바스크립트 로직]
-    // Fisher-Yates 셔플 알고리즘
-    function shuffleArray(array) {
-      const arr = [...array];
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-      return arr;
-    }
-
-    // 타이핑 애니메이션 효과
-    function typeWriter(element, text, speed = 30) {
-      let i = 0;
-      element.textContent = "";
-      function type() {
-        if (i < text.length) {
-          element.textContent += text.charAt(i);
-          i++;
-          setTimeout(type, speed);
-        }
-      }
-      type();
-    }
-
-    // 초기화 및 셔플 시작
     btnShuffle.addEventListener('click', () => {
-      userConcern = inputConcern.value.trim() || "나의 전체적인 운세";
+      userConcern = document.getElementById('user-concern').value.trim() || "나의 전체적인 운세";
       userInfo = {
         year: document.getElementById('birth-year').value,
         month: document.getElementById('birth-month').value,
         day: document.getElementById('birth-day').value,
         gender: document.getElementById('user-gender').value
       };
-      
       btnShuffle.classList.add('hidden');
-      stateStart.querySelector('.max-w-4xl').classList.add('hidden'); 
-      shuffleVisual.classList.remove('hidden');
-      shuffleVisual.classList.add('shuffling');
-
+      const visual = document.getElementById('shuffle-deck-visual');
+      visual.classList.remove('hidden');
+      visual.classList.add('shuffling');
+      visual.style.backgroundImage = 'url("https://upload.wikimedia.org/wikipedia/commons/5/5c/Tarot_card_back_RWS.jpg")';
+      
       setTimeout(() => {
-        shuffleVisual.classList.remove('shuffling');
-        shuffledDeck = shuffleArray(tarotDeck);
+        shuffledDeck = [...tarotDeck].sort(() => Math.random() - 0.5);
         goToSpreadState();
       }, 1500);
     });
 
-    // 스프레드 화면 렌더링
     function goToSpreadState() {
       stateStart.classList.add('hidden');
       stateSpread.classList.remove('hidden');
-      
       const config = spreadConfigs[currentSpread];
-      stateSpread.querySelector('h2').textContent = `카드를 ${config.count}장 선택해 주세요`;
+      document.getElementById('selection-counter').textContent = `선택된 카드: 0 / ${config.count}`;
       
-      // 슬롯 생성 및 배치
       selectedSlots.innerHTML = '';
       config.layout.forEach((pos, i) => {
         const slot = document.createElement('div');
         slot.className = 'slot';
-        // 중심점(left:50%, top:50%) 기준으로 배치
         slot.style.left = `calc(50% + ${pos.x}px)`;
         slot.style.top = `calc(50% + ${pos.y}px)`;
         slot.style.transform = `translate(-50%, -50%) ${pos.rot ? `rotate(${pos.rot}deg)` : ''}`;
-        
-        const label = document.createElement('span');
-        label.className = 'slot-label';
-        label.textContent = config.positions[i];
-        slot.appendChild(label);
-        
+        const lbl = document.createElement('span');
+        lbl.className = 'slot-label'; lbl.textContent = config.positions[i];
+        slot.appendChild(lbl);
         selectedSlots.appendChild(slot);
       });
 
       cardGrid.innerHTML = '';
-      selectedCards = [];
-      updateCounter();
-
-      const totalCards = shuffledDeck.length;
-      const spreadAngle = 150; 
-      const startAngle = -(spreadAngle / 2);
-      const angleStep = spreadAngle / (totalCards - 1);
-      const radius = window.innerWidth > 768 ? 800 : 500; 
-
-      shuffledDeck.forEach((card, index) => {
-        const cardEl = document.createElement('div');
-        cardEl.className = 'spread-card w-12 h-20 md:w-16 md:h-28 bg-indigo-950 rounded-lg border border-indigo-400/30 cursor-pointer shadow-2xl bg-cover bg-center opacity-0';
-        cardEl.style.backgroundImage = 'url("https://upload.wikimedia.org/wikipedia/commons/5/5c/Tarot_card_back_RWS.jpg")';
-        
-        const currentAngle = startAngle + (index * angleStep);
-        const rad = currentAngle * (Math.PI / 180);
-        
-        const tx = Math.sin(rad) * radius;
-        const ty = (1 - Math.cos(rad)) * radius;
-        
-        cardEl.dataset.index = index;
-        cardEl.addEventListener('click', handleCardSelect);
-        cardGrid.appendChild(cardEl);
-
+      const radius = window.innerWidth > 768 ? 750 : 450;
+      const angleStep = 150 / (shuffledDeck.length - 1);
+      
+      shuffledDeck.forEach((card, i) => {
+        const el = document.createElement('div');
+        el.className = 'spread-card w-12 h-20 md:w-16 md:h-28 bg-indigo-950 rounded-lg border border-indigo-400/30 cursor-pointer shadow-2xl bg-cover bg-center opacity-0';
+        el.style.backgroundImage = 'url("https://upload.wikimedia.org/wikipedia/commons/5/5c/Tarot_card_back_RWS.jpg")';
+        const angle = -75 + (i * angleStep);
+        const rad = angle * (Math.PI / 180);
+        const tx = Math.sin(rad) * radius, ty = (1 - Math.cos(rad)) * radius;
+        el.dataset.index = i;
+        el.addEventListener('click', handleCardSelect);
+        cardGrid.appendChild(el);
         setTimeout(() => {
-          cardEl.classList.add('dealt');
-          cardEl.style.opacity = '1';
-          cardEl.style.setProperty('--tx', `${tx}px`);
-          cardEl.style.setProperty('--ty', `${ty}px`);
-          cardEl.style.setProperty('--rot', `${currentAngle}deg`);
-        }, index * 20);
+          el.classList.add('dealt');
+          el.style.opacity = '1';
+          el.style.setProperty('--tx', `${tx}px`);
+          el.style.setProperty('--ty', `${ty}px`);
+          el.style.setProperty('--rot', `${angle}deg`);
+        }, i * 20);
       });
     }
 
-    // 카드 선택 핸들러
     function handleCardSelect(e) {
       const config = spreadConfigs[currentSpread];
       if (selectedCards.length >= config.count) return;
-      
       const target = e.currentTarget;
-      if (target.classList.contains('is-selected')) return; 
+      if (target.classList.contains('is-selected')) return;
 
-      const currentIdx = selectedCards.length; 
+      const idx = selectedCards.length;
       const cardData = shuffledDeck[target.dataset.index];
-      const isReversed = Math.random() < 0.3; // 30% 확률로 역방향
-      
-      selectedCards.push({ ...cardData, isReversed });
+      const rev = Math.random() < 0.3;
+      selectedCards.push({ ...cardData, isReversed: rev });
       target.classList.add('is-selected');
 
-      const slots = document.querySelectorAll('#selected-slots .slot');
-      const targetSlot = slots[currentIdx];
-      
-      const gridRect = cardGrid.getBoundingClientRect();
-      const slotRect = targetSlot.getBoundingClientRect();
-      
-      const gridCenterX = gridRect.left + gridRect.width / 2;
-      const cardHalfHeight = target.offsetHeight / 2;
-      const gridCenterY = gridRect.bottom - 40 - cardHalfHeight;
-      
-      const slotCenterX = slotRect.left + slotRect.width / 2;
-      const slotCenterY = slotRect.top + slotRect.height / 2;
-      
-      const finalTx = slotCenterX - gridCenterX;
-      const finalTy = slotCenterY - gridCenterY;
-      
-      // 레이아웃에 회전값이 있으면 적용
-      const layoutRot = config.layout[currentIdx].rot || 0;
+      const slot = document.querySelectorAll('#selected-slots .slot')[idx];
+      const gR = cardGrid.getBoundingClientRect(), sR = slot.getBoundingClientRect();
+      const finalTx = (sR.left + sR.width/2) - (gR.left + gR.width/2);
+      const finalTy = (sR.top + sR.height/2) - (gR.bottom - 20 - target.offsetHeight/2);
 
       target.style.setProperty('--tx', `${finalTx}px`);
       target.style.setProperty('--ty', `${finalTy}px`);
-      target.style.setProperty('--rot', `${layoutRot}deg`);
-      target.style.zIndex = 1000 + currentIdx;
+      target.style.setProperty('--rot', `${config.layout[idx].rot || 0}deg`);
+      target.style.zIndex = 1000 + idx;
 
-      updateCounter();
-
-      if (selectedCards.length === config.count) {
-        setTimeout(goToResultState, 1200);
-      }
+      document.getElementById('selection-counter').textContent = `선택된 카드: ${selectedCards.length} / ${config.count}`;
+      if (selectedCards.length === config.count) setTimeout(goToResultState, 1200);
     }
 
-    function updateCounter() {
-      const config = spreadConfigs[currentSpread];
-      selectionCounter.textContent = `선택된 카드: ${selectedCards.length} / ${config.count}`;
-    }
-
-    // 결과 화면 렌더링
     async function goToResultState() {
       stateSpread.classList.add('hidden');
       stateResult.classList.remove('hidden');
-      
-      const resultTitle = stateResult.querySelector('h2');
-      resultTitle.textContent = `타로 마스터가 "${spreadConfigs[currentSpread].name}" 배열로 분석 중입니다...`;
-      
-      resultContainer.innerHTML = '';
-      // 결과 그리드 조정 (장수가 많으면 촘촘하게)
-      const config = spreadConfigs[currentSpread];
-      if (config.count > 6) {
-        resultContainer.className = 'grid grid-cols-2 md:grid-cols-5 gap-4';
-      } else if (config.count === 1) {
-        resultContainer.className = 'flex justify-center';
-      } else {
-        resultContainer.className = 'grid grid-cols-1 md:grid-cols-3 gap-8';
-      }
+      const container = document.getElementById('result-container');
+      container.innerHTML = '';
+      container.className = selectedCards.length > 5 ? 'grid grid-cols-2 md:grid-cols-5 gap-4' : 'grid grid-cols-1 md:grid-cols-3 gap-6';
 
-      const cardNodes = [];
-      selectedCards.forEach((card, idx) => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'flex flex-col items-center bg-slate-800/40 p-4 rounded-2xl border border-indigo-500/20';
-
-        const posName = spreadConfigs[currentSpread].positions[idx];
-        const positionTitle = document.createElement('h3');
-        positionTitle.className = 'text-sm font-bold mb-3 text-indigo-300';
-        positionTitle.textContent = `[${posName}]`;
-
-        const card3DContainer = document.createElement('div');
-        card3DContainer.className = `perspective-1000 ${config.count > 6 ? 'w-28 h-44' : 'w-44 h-72 md:w-52 md:h-80'} mb-4 cursor-pointer`;
-        
-        const cardInner = document.createElement('div');
-        cardInner.className = 'card-inner relative w-full h-full transform-style-3d';
-        
-        const cardBack = document.createElement('div');
-        cardBack.className = 'card-back absolute w-full h-full backface-hidden bg-indigo-900 rounded-lg border-2 border-indigo-400/50 bg-cover bg-center';
-        cardBack.style.backgroundImage = 'url("https://upload.wikimedia.org/wikipedia/commons/5/5c/Tarot_card_back_RWS.jpg")';
-        
-        const cardFront = document.createElement('div');
-        cardFront.className = 'card-front absolute w-full h-full backface-hidden rotate-y-180 rounded-lg overflow-hidden bg-white border-2 border-indigo-300';
-        
-        const cardImg = document.createElement('img');
-        cardImg.src = card.image;
-        cardImg.alt = card.name;
-        cardImg.className = 'w-full h-full object-fill';
-        if (card.isReversed) cardImg.classList.add('rotate-z-180');
-
-        cardFront.appendChild(cardImg);
-        cardInner.appendChild(cardBack);
-        cardInner.appendChild(cardFront);
-        card3DContainer.appendChild(cardInner);
-
-        const infoDiv = document.createElement('div');
-        infoDiv.className = 'opacity-0 transition-opacity duration-500 text-center';
-        
-        const cardName = document.createElement('h4');
-        cardName.className = 'text-sm font-bold text-white mb-2';
-        cardName.textContent = `${card.name} ${card.isReversed ? '(역)' : '(정)'}`;
-        
-        const cardMeaning = document.createElement('p');
-        cardMeaning.className = 'text-xs text-slate-300 leading-relaxed text-left';
-
-        infoDiv.appendChild(cardName);
-        infoDiv.appendChild(cardMeaning);
-        wrapper.appendChild(positionTitle);
-        wrapper.appendChild(card3DContainer);
-        wrapper.appendChild(infoDiv);
-        resultContainer.appendChild(wrapper);
-        
-        cardNodes.push({ inner: cardInner, info: infoDiv, text: cardMeaning });
+      selectedCards.forEach((card, i) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'bg-slate-800/50 p-4 rounded-2xl border border-indigo-500/20 text-center';
+        wrap.innerHTML = `<h3 class="text-indigo-300 font-bold text-xs mb-2">[${spreadConfigs[currentSpread].positions[i]}]</h3>
+          <div class="perspective-1000 mx-auto w-32 h-48 mb-3"><div class="card-inner relative w-full h-full transform-style-3d">
+            <div class="absolute w-full h-full backface-hidden bg-indigo-900 rounded-lg border-2 border-indigo-400 bg-cover bg-center" style="background-image:url('https://upload.wikimedia.org/wikipedia/commons/5/5c/Tarot_card_back_RWS.jpg')"></div>
+            <div class="absolute w-full h-full backface-hidden rotate-y-180 rounded-lg overflow-hidden border-2 border-indigo-300">
+              <img src="${card.image}" class="w-full h-full object-fill ${card.isReversed ? 'rotate-z-180' : ''}">
+            </div>
+          </div></div>
+          <h4 class="text-white font-bold text-sm mb-1">${card.name} ${card.isReversed ? '(역)' : '(정)'}</h4>
+          <p class="text-xs text-slate-300 leading-relaxed text-left opacity-0 transition-opacity duration-500"></p>`;
+        container.appendChild(wrap);
       });
 
       try {
-        const response = await fetch(WORKER_URL, {
+        const res = await fetch(WORKER_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            concern: userConcern,
-            userInfo: userInfo,
+            concern: userConcern, userInfo, 
             spreadName: spreadConfigs[currentSpread].name,
             positions: spreadConfigs[currentSpread].positions,
             cards: selectedCards.map(c => ({ name: c.name, isReversed: c.isReversed }))
           })
         });
-
-        const aiData = await response.json();
-        
-        resultTitle.textContent = `"${userConcern}" 리딩 결과`;
-
-        // 하나씩 카드 공개
-        for (let i = 0; i < cardNodes.length; i++) {
-          const node = cardNodes[i];
-          const interpretation = aiData.readings[i];
-          if (!interpretation) continue; 
-          
-          await new Promise(res => setTimeout(res, 400)); 
-          node.inner.style.transform = 'rotateY(180deg)';
-          node.info.classList.remove('opacity-0');
-          typeWriter(node.text, interpretation, 20);
-          // 장수가 많으면 기다리는 시간을 줄임
-          await new Promise(res => setTimeout(res, config.count > 5 ? 1000 : 2000));
+        const data = await res.json();
+        const items = container.querySelectorAll('p');
+        for(let i=0; i<items.length; i++) {
+          const inner = container.querySelectorAll('.card-inner')[i];
+          inner.style.transform = 'rotateY(180deg)';
+          items[i].classList.remove('opacity-0');
+          items[i].textContent = data.readings[i];
+          await new Promise(r => setTimeout(r, 800));
         }
-
-        const totalReading = document.createElement('div');
-        totalReading.className = 'col-span-full mt-10 p-8 bg-indigo-950/40 rounded-3xl border border-indigo-500/30 text-center max-w-3xl mx-auto opacity-0 transition-opacity duration-1000';
-        totalReading.innerHTML = `<h4 class="text-xl font-bold text-indigo-300 mb-4">마스터의 최종 조언</h4><p class="text-slate-200 leading-relaxed"></p>`;
-        resultContainer.appendChild(totalReading);
-        
-        setTimeout(() => {
-          totalReading.classList.remove('opacity-0');
-          typeWriter(totalReading.querySelector('p'), aiData.conclusion, 30);
-        }, 500);
-
-      } catch (error) {
-        console.error(error);
-        resultTitle.textContent = "AI 리딩 중 오류가 발생했습니다.";
-      }
+        const advice = document.createElement('div');
+        advice.className = 'col-span-full mt-8 p-6 bg-indigo-900/40 rounded-3xl border border-indigo-500/30 text-center';
+        advice.innerHTML = `<h4 class="text-indigo-200 font-bold mb-2">마스터의 조언</h4><p class="text-sm text-slate-200">${data.conclusion}</p>`;
+        container.appendChild(advice);
+      } catch(e) { console.error(e); }
     }
 
-    btnRestart.addEventListener('click', () => {
-      stateResult.classList.add('hidden');
-      stateStart.classList.remove('hidden');
-      btnShuffle.classList.remove('hidden');
-      stateStart.querySelector('.max-w-4xl').classList.remove('hidden');
-      shuffleVisual.classList.add('hidden');
-      selectedCards = [];
-    });
+    document.getElementById('btn-restart').addEventListener('click', () => location.reload());
   </script>
-
 </body>
 </html>
