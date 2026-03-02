@@ -35,11 +35,14 @@
       transform-origin: center center;
       transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       z-index: 1;
+      /* 기본 위치를 변수로 관리 */
+      transform: translateX(calc(-50% + var(--tx, 0px))) translateY(var(--ty, 0px)) rotate(var(--rot, 0deg));
     }
 
     .spread-card.dealt:hover {
       z-index: 100 !important;
-      transform: translateX(-50%) translateY(var(--ty)) translateX(var(--tx)) rotate(var(--rot)) scale(1.1) !important;
+      /* 호버 시 위치 이동 없이 스케일만 조정 */
+      transform: translateX(calc(-50% + var(--tx, 0px))) translateY(var(--ty, 0px)) rotate(var(--rot, 0deg)) scale(1.1) !important;
       filter: brightness(1.2) drop-shadow(0 0 20px rgba(129, 140, 248, 0.8));
       border-color: #818cf8;
     }
@@ -425,7 +428,11 @@
           const tx = Math.cos(rad) * radius;
           const ty = Math.sin(rad) * radius + radius;
           
-          cardEl.style.transform = `translateX(calc(-50% + ${tx}px)) translateY(${ty}px) rotate(${currentAngle}deg)`;
+          // CSS 변수로 위치 저장 (CSS에서 이 값을 사용)
+          cardEl.style.setProperty('--tx', `${tx}px`);
+          cardEl.style.setProperty('--ty', `${ty}px`);
+          cardEl.style.setProperty('--rot', `${currentAngle}deg`);
+          
           cardEl.dataset.tx = tx;
           cardEl.dataset.ty = ty;
           cardEl.dataset.rot = currentAngle;
@@ -455,20 +462,31 @@
       const cardRect = target.getBoundingClientRect();
       const slotRect = targetSlot.getBoundingClientRect();
       
-      // 현재 적용된 transform을 고려한 상대적 이동 계산
-      // (슬롯의 중앙) - (카드의 중앙)
-      const deltaX = (slotRect.left + slotRect.width / 2) - (cardRect.left + cardRect.width / 2);
-      const deltaY = (slotRect.top + slotRect.height / 2) - (cardRect.top + cardRect.height / 2);
+      // 뷰포트 기준 카드의 현재 중앙 좌표
+      const cardCenterX = cardRect.left + cardRect.width / 2;
+      const cardCenterY = cardRect.top + cardRect.height / 2;
       
-      // 기존 transform 값 (translateX(-50%) + var(--tx/ty))
+      // 뷰포트 기준 슬롯의 중앙 좌표
+      const slotCenterX = slotRect.left + slotRect.width / 2;
+      const slotCenterY = slotRect.top + slotRect.height / 2;
+      
+      // 이동해야 할 거리
+      const diffX = slotCenterX - cardCenterX;
+      const diffY = slotCenterY - cardCenterY;
+      
+      // 현재 적용된 var(--tx), var(--ty) 값
       const currentTx = parseFloat(target.dataset.tx) || 0;
       const currentTy = parseFloat(target.dataset.ty) || 0;
       
-      const finalTx = currentTx + deltaX;
-      const finalTy = currentTy + deltaY;
+      // 최종적으로 적용할 transform (현재 위치에서 diff만큼 더 이동)
+      const finalTx = currentTx + diffX;
+      const finalTy = currentTy + diffY;
       
-      // translateX(-50%)가 CSS에 있으므로, deltaX만큼을 더해줌
-      target.style.transform = `translateX(calc(-50% + ${finalTx}px)) translateY(${finalTy}px) rotate(0deg) scale(1.05)`;
+      // CSS 변수를 업데이트
+      target.style.setProperty('--tx', `${finalTx}px`);
+      target.style.setProperty('--ty', `${finalTy}px`);
+      target.style.setProperty('--rot', `0deg`);
+      
       target.style.zIndex = 1000 + currentSelectionIndex;
 
       updateCounter();
