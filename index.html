@@ -31,28 +31,27 @@
     .spread-card {
       position: absolute;
       left: 50%;
-      bottom: 50px;
+      bottom: 60px;
       transform-origin: center center;
-      transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
       z-index: 1;
-      /* 기본 위치를 변수로 관리 */
       transform: translateX(calc(-50% + var(--tx, 0px))) translateY(var(--ty, 0px)) rotate(var(--rot, 0deg));
     }
 
     .spread-card.dealt:hover {
       z-index: 100 !important;
-      /* 호버 시 위치 이동 없이 스케일만 조정 */
-      transform: translateX(calc(-50% + var(--tx, 0px))) translateY(var(--ty, 0px)) rotate(var(--rot, 0deg)) scale(1.1) !important;
-      filter: brightness(1.2) drop-shadow(0 0 20px rgba(129, 140, 248, 0.8));
-      border-color: #818cf8;
+      transform: translateX(calc(-50% + var(--tx, 0px))) translateY(calc(var(--ty, 0px) - 30px)) rotate(var(--rot, 0deg)) scale(1.15) !important;
+      filter: brightness(1.2) drop-shadow(0 0 25px rgba(129, 140, 248, 0.9));
+      border-color: #a5b4fc;
     }
 
     #card-grid {
       position: relative;
-      height: 500px;
+      height: 450px;
       margin-top: 20px;
-      perspective: 1500px;
+      perspective: 2000px;
       width: 100%;
+      overflow: visible;
     }
 
     /* 선택된 카드 비행 애니메이션용 */
@@ -60,7 +59,7 @@
       z-index: 500 !important;
       opacity: 1 !important;
       pointer-events: none;
-      filter: brightness(1.2) drop-shadow(0 0 15px rgba(129, 140, 248, 0.8));
+      filter: brightness(1.1) drop-shadow(0 0 20px rgba(129, 140, 248, 0.6));
     }
 
     @media (min-width: 768px) {
@@ -397,24 +396,27 @@
       updateCounter();
 
       const totalCards = shuffledDeck.length;
-      // 부채꼴 각도 설정 - 더 넓게 펼침 (160도)
-      const spreadAngle = 160; 
+      // 부채꼴 각도 설정 (140도 정도로 조절하여 너무 촘촘하지 않게 함)
+      const spreadAngle = 140; 
       const startAngle = -(spreadAngle / 2);
       const angleStep = spreadAngle / (totalCards - 1);
-      const radius = window.innerWidth > 768 ? 350 : 250; // 곡선 반경
+      
+      // 반경을 크게 설정하여 완만한 부채꼴 생성
+      const radius = window.innerWidth > 768 ? 700 : 450; 
 
       shuffledDeck.forEach((card, index) => {
         const cardEl = document.createElement('div');
-        cardEl.className = 'spread-card w-14 h-24 md:w-20 md:h-32 bg-indigo-900 rounded-md border border-indigo-400 cursor-pointer shadow-lg bg-cover bg-center opacity-0';
+        cardEl.className = 'spread-card w-14 h-24 md:w-20 md:h-32 bg-indigo-900 rounded-lg border border-indigo-400/50 cursor-pointer shadow-xl bg-cover bg-center opacity-0';
         cardEl.style.backgroundImage = 'url("https://upload.wikimedia.org/wikipedia/commons/5/5c/Tarot_card_back_RWS.jpg")';
         
         const currentAngle = startAngle + (index * angleStep);
-        cardEl.style.setProperty('--rot', `${currentAngle}deg`);
+        const rad = currentAngle * (Math.PI / 180);
         
-        // 초기 상태 (중앙 하단에 겹쳐 있음)
-        cardEl.style.transform = `translateX(-50%) rotate(0deg)`;
+        // tx, ty 계산
+        const tx = Math.sin(rad) * radius;
+        const ty = (1 - Math.cos(rad)) * radius;
+        
         cardEl.dataset.index = index;
-        
         cardEl.addEventListener('click', handleCardSelect);
         cardGrid.appendChild(cardEl);
 
@@ -422,21 +424,10 @@
         setTimeout(() => {
           cardEl.classList.add('dealt');
           cardEl.style.opacity = '1';
-          
-          // 삼각함수를 이용한 정확한 부채꼴 배치
-          const rad = (currentAngle - 90) * (Math.PI / 180);
-          const tx = Math.cos(rad) * radius;
-          const ty = Math.sin(rad) * radius + radius;
-          
-          // CSS 변수로 위치 저장 (CSS에서 이 값을 사용)
           cardEl.style.setProperty('--tx', `${tx}px`);
           cardEl.style.setProperty('--ty', `${ty}px`);
           cardEl.style.setProperty('--rot', `${currentAngle}deg`);
-          
-          cardEl.dataset.tx = tx;
-          cardEl.dataset.ty = ty;
-          cardEl.dataset.rot = currentAngle;
-        }, index * 30);
+        }, index * 25);
       });
     }
 
@@ -459,30 +450,23 @@
       const slots = document.querySelectorAll('#selected-slots .slot');
       const targetSlot = slots[currentSelectionIndex];
       
-      const cardRect = target.getBoundingClientRect();
+      // grid와 slot의 상대적 위치 계산
+      const gridRect = cardGrid.getBoundingClientRect();
       const slotRect = targetSlot.getBoundingClientRect();
       
-      // 뷰포트 기준 카드의 현재 중앙 좌표
-      const cardCenterX = cardRect.left + cardRect.width / 2;
-      const cardCenterY = cardRect.top + cardRect.height / 2;
+      // 카드가 left: 50% 이므로 기준점은 grid의 가로 중앙
+      const gridCenterX = gridRect.left + gridRect.width / 2;
+      // 카드가 bottom: 60px 이므로 기준점은 grid의 바닥에서 60px 위
+      const gridBaseY = gridRect.bottom - 60;
       
-      // 뷰포트 기준 슬롯의 중앙 좌표
+      // 슬롯의 중앙 좌표
       const slotCenterX = slotRect.left + slotRect.width / 2;
       const slotCenterY = slotRect.top + slotRect.height / 2;
       
-      // 이동해야 할 거리
-      const diffX = slotCenterX - cardCenterX;
-      const diffY = slotCenterY - cardCenterY;
+      // 최종 이동 좌표 계산 (CSS transform의 origin이 중앙이므로 슬롯 중앙에 맞춤)
+      const finalTx = slotCenterX - gridCenterX;
+      const finalTy = slotCenterY - gridBaseY;
       
-      // 현재 적용된 var(--tx), var(--ty) 값
-      const currentTx = parseFloat(target.dataset.tx) || 0;
-      const currentTy = parseFloat(target.dataset.ty) || 0;
-      
-      // 최종적으로 적용할 transform (현재 위치에서 diff만큼 더 이동)
-      const finalTx = currentTx + diffX;
-      const finalTy = currentTy + diffY;
-      
-      // CSS 변수를 업데이트
       target.style.setProperty('--tx', `${finalTx}px`);
       target.style.setProperty('--ty', `${finalTy}px`);
       target.style.setProperty('--rot', `0deg`);
